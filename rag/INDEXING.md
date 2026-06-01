@@ -39,6 +39,8 @@ The manifest is local generated state and should not be committed.
 
 ## Metadata Rules
 
+Metadata construction lives in `raglib/source_metadata.py`.
+
 Every ingested chunk should include:
 
 - `file_id`
@@ -77,6 +79,8 @@ Currently excluded:
 
 ## Markdown Chunking
 
+Chunking logic lives in `raglib/markdown_chunking.py`.
+
 Markdown files are split in two stages:
 
 1. split by Markdown headers (`#` to `####`) to preserve section context
@@ -85,6 +89,7 @@ Markdown files are split in two stages:
 ## Incremental Indexing
 
 - `commands/ingest.py` creates the collection when missing and updates indexed chunks per source file.
+- Collection version metadata is written and validated through `raglib/collection_manifest.py`.
 - `commands/ingest.py` skips files whose current `file_hash` already exists in Qdrant.
 - Vectors are upserted in batches to avoid keeping the entire ingest result in memory.
 - Changed files are read, chunked, and embedded successfully before old chunks for that file are deleted.
