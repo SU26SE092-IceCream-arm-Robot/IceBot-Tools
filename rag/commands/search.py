@@ -1,0 +1,86 @@
+import argparse
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
+from raglib.config import setup_cache_env
+from raglib.vector_store import retrieve_context
+
+setup_cache_env()
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Search IceBot project knowledge in Qdrant.")
+    parser.add_argument("query", nargs="?", help="Search question. If omitted, input prompt is shown.")
+    parser.add_argument("--limit", type=int, default=5, help="Maximum number of results.")
+    parser.add_argument(
+        "--candidate-limit",
+        type=int,
+        default=100,
+        help="Number of vector search candidates to rerank.",
+    )
+    parser.add_argument(
+        "--no-rerank",
+        action="store_true",
+        help="Disable reranking and return vector search order.",
+    )
+    parser.add_argument(
+        "--include-vault",
+        action="store_true",
+        help="Include Vault draft notes in results. Default searches official docs only.",
+    )
+    parser.add_argument(
+        "--status",
+        action="append",
+        help="Filter by status. Can be repeated, e.g. --status current --status decision-note.",
+    )
+    parser.add_argument(
+        "--source-type",
+        action="append",
+        help="Filter by source_type. Can be repeated, e.g. --source-type backend-doc.",
+    )
+    parser.add_argument(
+        "--path-contains",
+        action="append",
+        help="Filter by source_path text. Can be repeated, e.g. --path-contains IOT_CONTRACT.",
+    )
+    return parser.parse_args()
+
+
+
+def main() -> None:
+    args = parse_args()
+    query = args.query or input("Question: ")
+
+    results = retrieve_context(
+        query,
+        include_vault=args.include_vault,
+        statuses=args.status,
+        source_types=args.source_type,
+        path_contains=args.path_contains,
+        limit=args.limit,
+        candidate_limit=args.candidate_limit,
+        use_reranker=not args.no_rerank,
+    )
+
+    for i, result in enumerate(results, 1):
+        payload = result.payload or {}
+
+        print("=" * 80)
+        print(f"Result {i}")
+        print("Vector score:", payload.get("vector_score", result.score))
+        print("Rerank score:", payload.get("rerank_score"))
+        print("Source:", payload.get("source"))
+        print("Path:", payload.get("source_path"))
+        print("Type:", payload.get("source_type"))
+        print("Authority:", payload.get("authority"))
+        print("Status:", payload.get("status"))
+        print("Section index:", payload.get("section_index"))
+        print("Section path:", payload.get("section_path"))
+        print("-" * 80)
+        print(payload.get("text"))
+
+
+if __name__ == "__main__":
+    main()

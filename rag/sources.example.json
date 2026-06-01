@@ -1,0 +1,30 @@
+[
+  {
+    "path": "../IceBot-Backend/ARCHITECTURE.md",
+    "source_type": "backend-doc",
+    "authority": "official",
+    "status": "current",
+    "required": false
+  },
+  {
+    "path": "../IceBot-Backend/docs",
+    "source_type": "backend-doc",
+    "authority": "official",
+    "status": "current",
+    "required": false
+  },
+  {
+    "path": "../Docs",
+    "source_type": "project-doc",
+    "authority": "official",
+    "status": "current",
+    "required": false
+  },
+  {
+    "path": "../Vault",
+    "source_type": "vault",
+    "authority": "draft",
+    "status": "exploration",
+    "required": false
+  }
+]

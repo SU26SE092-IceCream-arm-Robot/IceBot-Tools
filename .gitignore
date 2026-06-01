@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.py[cod]
+
+# Local environment files
+.env
+!.env.example
+.local/
+rag/sources.local.json
+
+# Generated vector database storage
+data/qdrant/
+data/rag_collections/
