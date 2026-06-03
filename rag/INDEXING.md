@@ -98,6 +98,13 @@ Defaults are `800` and `120`, preserving the current behavior. Changing these va
 
 ## Incremental Indexing
 
+- Do not run ingest automatically after documentation-only edits unless the user explicitly asks for ingest. Ingest mutates the local vector database and can be slow on lower-memory machines.
+- After doc changes, normally provide this manual command instead:
+
+```powershell
+python .\rag\commands\ingest.py
+```
+
 - `commands/ingest.py` creates the collection when missing and updates indexed chunks per source file.
 - Collection version metadata is written and validated through `raglib/collection_manifest.py`.
 - `commands/ingest.py` skips files whose current `file_hash` already exists in Qdrant.
