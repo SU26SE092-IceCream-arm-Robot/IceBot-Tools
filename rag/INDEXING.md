@@ -61,6 +61,7 @@ Some project-related notes are intentionally not embedded because they are about
 
 Currently excluded:
 
+- `Vault/Learning/AGENT_HARNESS_LEARNING_NOTES.md`
 - `Vault/Learning/RAG_LEARNING_NOTES.md`
 
 ## Payload Indexes
@@ -85,6 +86,8 @@ Markdown files are split in two stages:
 
 1. split by Markdown headers (`#` to `####`) to preserve section context
 2. split long sections into smaller chunks with recursive character splitting
+
+Empty or Markdown-noise-only chunks are skipped before embedding. `commands/ingest.py` prints the skipped empty chunk count in the ingest summary for debugging.
 
 ## Incremental Indexing
 

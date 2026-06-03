@@ -45,6 +45,7 @@ from qdrant_client.models import (
 )
 
 EXCLUDED_SOURCE_PATHS = {
+    "Vault/Learning/AGENT_HARNESS_LEARNING_NOTES.md",
     "Vault/Learning/RAG_LEARNING_NOTES.md",
 }
 
@@ -299,9 +300,10 @@ class Ingester:
         self._points.clear()
         return flushed_count
 
-    def build_file_points(self, metadata: dict, file_path: Path) -> list[PointStruct]:
+    def build_file_points(self, metadata: dict, file_path: Path) -> tuple[list[PointStruct], int]:
         text = file_path.read_text(encoding="utf-8")
         chunks = self.chunker.split(text)
+        skipped_empty_chunks = self.chunker.last_skipped_empty_chunks
         file_points = []
 
         for index, chunk in enumerate(chunks):
@@ -322,7 +324,7 @@ class Ingester:
                 )
             )
 
-        return file_points
+        return file_points, skipped_empty_chunks
 
     # ------------------------------------------------------------------
     # Main ingest loop
@@ -335,6 +337,7 @@ class Ingester:
         indexed_chunks = 0
         indexed_files = 0
         skipped_files = 0
+        skipped_empty_chunks = 0
         seen_file_ids: set[str] = set()
 
         for source_config in source_configs:
@@ -352,7 +355,8 @@ class Ingester:
                     skipped_files += 1
                     continue
 
-                file_points = self.build_file_points(metadata, file_path)
+                file_points, file_skipped_empty_chunks = self.build_file_points(metadata, file_path)
+                skipped_empty_chunks += file_skipped_empty_chunks
 
                 self.delete_existing_file_points(metadata["file_id"])
                 self._points.extend(file_points)
@@ -372,6 +376,7 @@ class Ingester:
         print(
             f"Indexed {indexed_chunks} chunks from {indexed_files} changed files; "
             f"skipped {skipped_files} unchanged files; "
+            f"skipped {skipped_empty_chunks} empty chunks; "
             f"removed {orphaned_files} orphaned files"
         )
 
