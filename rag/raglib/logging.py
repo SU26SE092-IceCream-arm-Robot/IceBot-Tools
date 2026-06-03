@@ -2,7 +2,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from raglib.config import RAG_LOG_BACKUP_COUNT, RAG_LOG_DIR, RAG_LOG_MAX_BYTES
+from raglib.config import RAG_LOG_BACKUP_COUNT, RAG_LOG_CONSOLE, RAG_LOG_DIR, RAG_LOG_MAX_BYTES
 
 
 def configure_logger(name: str, log_file_name: str) -> logging.Logger:
@@ -23,6 +23,7 @@ def configure_logger(name: str, log_file_name: str) -> logging.Logger:
     )
 
     console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO if RAG_LOG_CONSOLE else logging.WARNING)
     console_handler.setFormatter(formatter)
 
     file_handler = RotatingFileHandler(
@@ -31,6 +32,7 @@ def configure_logger(name: str, log_file_name: str) -> logging.Logger:
         backupCount=RAG_LOG_BACKUP_COUNT,
         encoding="utf-8",
     )
+    file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
 
     logger.addHandler(console_handler)

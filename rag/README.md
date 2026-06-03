@@ -44,6 +44,7 @@ This folder contains local RAG scripts for searching and asking over IceBot proj
 - `RAG_CACHE_ROOT` controls where local model/cache files are stored.
 - `RAG_LOG_DIR` controls where RAG runtime logs are stored.
 - RAG logs use size-based rotation by default: 10 MB per file and 10 backups.
+- `RAG_LOG_CONSOLE=false` keeps routine INFO logs in files only; console shows WARNING+ plus command summaries.
 - If `RAG_CACHE_ROOT` is unset, cache files use the user home cache folder: `~/.cache/icebot-rag`.
 - Do not copy canonical docs into `IceBot-Tools/data` as a permanent source. Ingest should read from the original source folders.
 
@@ -68,6 +69,8 @@ Local environment:
 - `RAG_CACHE_ROOT` is optional. If unset, model/cache files use the user home cache folder: `~/.cache/icebot-rag`.
 - `RAG_LOG_DIR` is optional. If unset, logs use `IceBot-Tools/logs/rag`.
 - `RAG_LOG_MAX_BYTES` and `RAG_LOG_BACKUP_COUNT` are optional. Defaults keep about 110 MB per log stream.
+- `RAG_LOG_CONSOLE` is optional. Set `true` to show INFO logs in the terminal while debugging.
+- `RAG_CHUNK_SIZE` and `RAG_CHUNK_OVERLAP` are optional. Defaults are `800` and `120`.
 - `commands/context.py`, `commands/search.py`, `commands/ingest.py`, and `mcp_server.py` do not call OpenAI directly.
 
 First-time setup:

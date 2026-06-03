@@ -89,6 +89,13 @@ Markdown files are split in two stages:
 
 Empty or Markdown-noise-only chunks are skipped before embedding. `commands/ingest.py` prints the skipped empty chunk count in the ingest summary for debugging.
 
+Chunk size and overlap are configurable through:
+
+- `RAG_CHUNK_SIZE`
+- `RAG_CHUNK_OVERLAP`
+
+Defaults are `800` and `120`, preserving the current behavior. Changing these values changes chunk boundaries and point ids, so re-run ingest after changing them.
+
 ## Incremental Indexing
 
 - `commands/ingest.py` creates the collection when missing and updates indexed chunks per source file.
@@ -101,6 +108,7 @@ Empty or Markdown-noise-only chunks are skipped before embedding. `commands/inge
 - If no source files are found, ingest aborts before orphan cleanup to avoid deleting the collection because of a bad path configuration.
 - Ingest writes console output and `ingest.log` under `IceBot-Tools/logs/rag` by default. Override with `RAG_LOG_DIR`.
 - Ingest logs use size-based rotation, not time-based retention. Defaults: 10 MB per file and 10 backups, for about 110 MB total per log stream.
+- Routine ingest INFO logs are file-only by default. Set `RAG_LOG_CONSOLE=true` to show INFO logs in the terminal while debugging.
 
 ## Script Alignment
 

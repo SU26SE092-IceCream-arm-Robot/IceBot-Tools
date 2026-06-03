@@ -1,5 +1,6 @@
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 
+from raglib.config import RAG_CHUNK_OVERLAP, RAG_CHUNK_SIZE
 from raglib.source_metadata import build_section_path
 
 
@@ -32,7 +33,10 @@ def get_section_metadata(section) -> dict:
 
 
 class MarkdownChunker:
-    def __init__(self, chunk_size: int = 800, chunk_overlap: int = 120) -> None:
+    def __init__(self, chunk_size: int | None = None, chunk_overlap: int | None = None) -> None:
+        chunk_size = chunk_size or RAG_CHUNK_SIZE
+        chunk_overlap = chunk_overlap if chunk_overlap is not None else RAG_CHUNK_OVERLAP
+
         self.markdown_splitter = MarkdownHeaderTextSplitter(
             headers_to_split_on=[
                 ("#", "h1"),

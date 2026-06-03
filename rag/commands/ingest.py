@@ -60,6 +60,9 @@ LOGGER = configure_logger("icebot.rag.ingest", "ingest.log")
 
 def load_source_configs() -> list[dict]:
     source_config_path = SOURCES_LOCAL_PATH if SOURCES_LOCAL_PATH.exists() else SOURCES_EXAMPLE_PATH
+    source_config_message = f"Using source config: {source_config_path}"
+    LOGGER.info(source_config_message)
+    print(source_config_message)
 
     if not source_config_path.exists():
         raise SystemExit(

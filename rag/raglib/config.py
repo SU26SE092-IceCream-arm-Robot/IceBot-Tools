@@ -20,6 +20,16 @@ def load_rag_env() -> None:
 
 load_rag_env()
 
+
+def parse_bool_env(name: str, default: bool = False) -> bool:
+    raw_value = os.getenv(name)
+
+    if raw_value is None:
+        return default
+
+    return raw_value.strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
 CACHE_ROOT = Path(os.getenv("RAG_CACHE_ROOT", str(Path.home() / ".cache" / "icebot-rag")))
 COLLECTION_BASE_NAME = os.getenv("RAG_COLLECTION_BASE_NAME", "icebot_project_knowledge")
 COLLECTION_VERSION = os.getenv("RAG_COLLECTION_VERSION", "v1")
@@ -31,6 +41,9 @@ SOURCES_LOCAL_PATH = RAG_DIR / "sources.local.json"
 RAG_LOG_DIR = Path(os.getenv("RAG_LOG_DIR", str(TOOLS_DIR / "logs" / "rag")))
 RAG_LOG_MAX_BYTES = int(os.getenv("RAG_LOG_MAX_BYTES", str(10 * 1024 * 1024)))
 RAG_LOG_BACKUP_COUNT = int(os.getenv("RAG_LOG_BACKUP_COUNT", "10"))
+RAG_LOG_CONSOLE = parse_bool_env("RAG_LOG_CONSOLE", default=False)
+RAG_CHUNK_SIZE = int(os.getenv("RAG_CHUNK_SIZE", "800"))
+RAG_CHUNK_OVERLAP = int(os.getenv("RAG_CHUNK_OVERLAP", "120"))
 MAX_RETRIEVAL_LIMIT = int(os.getenv("RAG_MAX_RETRIEVAL_LIMIT", "10"))
 MAX_CANDIDATE_LIMIT = int(os.getenv("RAG_MAX_CANDIDATE_LIMIT", "100"))
 
