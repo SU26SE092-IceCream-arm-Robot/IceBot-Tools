@@ -17,6 +17,7 @@ This folder contains local RAG scripts for searching and asking over IceBot proj
 - `commands/ask.py`: retrieves chunks and asks OpenAI to answer from that context.
 - `mcp_server.py`: exposes local RAG retrieval as an MCP server without calling OpenAI directly.
 - `raglib/config.py`: shared constants, workspace paths, model names, Qdrant URL, and cache environment setup.
+- `raglib/logging.py`: shared console and file logging setup for RAG commands.
 - `raglib/source_metadata.py`: source path normalization, file hash, point id, and metadata helpers.
 - `raglib/markdown_chunking.py`: Markdown header-aware chunking before recursive text splitting.
 - `raglib/collection_manifest.py`: local collection manifest creation and validation.
@@ -39,7 +40,10 @@ This folder contains local RAG scripts for searching and asking over IceBot proj
 ## Storage Boundaries
 
 - `IceBot-Tools/data/qdrant` stores generated Qdrant data mounted by Docker.
+- `IceBot-Tools/logs/rag` stores runtime logs such as `ingest.log`.
 - `RAG_CACHE_ROOT` controls where local model/cache files are stored.
+- `RAG_LOG_DIR` controls where RAG runtime logs are stored.
+- RAG logs use size-based rotation by default: 10 MB per file and 10 backups.
 - If `RAG_CACHE_ROOT` is unset, cache files use the user home cache folder: `~/.cache/icebot-rag`.
 - Do not copy canonical docs into `IceBot-Tools/data` as a permanent source. Ingest should read from the original source folders.
 
@@ -62,6 +66,8 @@ Local environment:
 - `IceBot-Tools/rag/sources.local.json` stores local source overrides and is ignored by git.
 - `OPENAI_API_KEY` is required only for `commands/ask.py`.
 - `RAG_CACHE_ROOT` is optional. If unset, model/cache files use the user home cache folder: `~/.cache/icebot-rag`.
+- `RAG_LOG_DIR` is optional. If unset, logs use `IceBot-Tools/logs/rag`.
+- `RAG_LOG_MAX_BYTES` and `RAG_LOG_BACKUP_COUNT` are optional. Defaults keep about 110 MB per log stream.
 - `commands/context.py`, `commands/search.py`, `commands/ingest.py`, and `mcp_server.py` do not call OpenAI directly.
 
 First-time setup:

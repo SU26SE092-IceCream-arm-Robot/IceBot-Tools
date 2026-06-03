@@ -99,6 +99,8 @@ Empty or Markdown-noise-only chunks are skipped before embedding. `commands/inge
 - Existing chunks for a source file are deleted only after replacement points are staged, preventing stale chunks when content shrinks or changes.
 - Chunks for files no longer present in the configured source folders are removed as orphaned file points.
 - If no source files are found, ingest aborts before orphan cleanup to avoid deleting the collection because of a bad path configuration.
+- Ingest writes console output and `ingest.log` under `IceBot-Tools/logs/rag` by default. Override with `RAG_LOG_DIR`.
+- Ingest logs use size-based rotation, not time-based retention. Defaults: 10 MB per file and 10 backups, for about 110 MB total per log stream.
 
 ## Script Alignment
 

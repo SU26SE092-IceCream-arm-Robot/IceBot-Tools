@@ -28,6 +28,9 @@ COLLECTION_MANIFEST_DIR = TOOLS_DIR / "data" / "rag_collections"
 COLLECTION_MANIFEST_PATH = COLLECTION_MANIFEST_DIR / f"{COLLECTION_NAME}.json"
 SOURCES_EXAMPLE_PATH = RAG_DIR / "sources.example.json"
 SOURCES_LOCAL_PATH = RAG_DIR / "sources.local.json"
+RAG_LOG_DIR = Path(os.getenv("RAG_LOG_DIR", str(TOOLS_DIR / "logs" / "rag")))
+RAG_LOG_MAX_BYTES = int(os.getenv("RAG_LOG_MAX_BYTES", str(10 * 1024 * 1024)))
+RAG_LOG_BACKUP_COUNT = int(os.getenv("RAG_LOG_BACKUP_COUNT", "10"))
 MAX_RETRIEVAL_LIMIT = int(os.getenv("RAG_MAX_RETRIEVAL_LIMIT", "10"))
 MAX_CANDIDATE_LIMIT = int(os.getenv("RAG_MAX_CANDIDATE_LIMIT", "100"))
 

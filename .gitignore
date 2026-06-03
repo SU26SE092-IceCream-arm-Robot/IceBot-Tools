@@ -11,3 +11,6 @@ rag/sources.local.json
 # Generated vector database storage
 data/qdrant/
 data/rag_collections/
+
+# Runtime logs
+logs/

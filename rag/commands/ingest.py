@@ -23,6 +23,7 @@ from raglib.collection_manifest import (
     validate_collection_manifest,
     write_collection_manifest,
 )
+from raglib.logging import configure_logger
 from raglib.markdown_chunking import MarkdownChunker
 from raglib.source_metadata import (
     build_metadata,
@@ -50,6 +51,7 @@ EXCLUDED_SOURCE_PATHS = {
 }
 
 BATCH_SIZE = 128
+LOGGER = configure_logger("icebot.rag.ingest", "ingest.log")
 
 
 # ---------------------------------------------------------------------------
@@ -161,6 +163,7 @@ class Ingester:
 
     def ensure_collection(self) -> None:
         if not self.client.collection_exists(collection_name=COLLECTION_NAME):
+            LOGGER.info("Creating Qdrant collection: %s", COLLECTION_NAME)
             self.client.create_collection(
                 collection_name=COLLECTION_NAME,
                 vectors_config=VectorParams(
@@ -169,6 +172,7 @@ class Ingester:
                 ),
             )
             write_collection_manifest(COLLECTION_MANIFEST_PATH, self.build_collection_manifest())
+            LOGGER.info("Wrote collection manifest: %s", COLLECTION_MANIFEST_PATH)
             return
 
         manifest = read_collection_manifest(COLLECTION_MANIFEST_PATH)
@@ -181,6 +185,7 @@ class Ingester:
             )
 
         validate_collection_manifest(manifest, self.build_collection_manifest())
+        LOGGER.info("Validated collection manifest: %s", COLLECTION_MANIFEST_PATH)
 
     def ensure_payload_indexes(self) -> None:
         indexed_fields = {
@@ -200,6 +205,7 @@ class Ingester:
                     field_name=field_name,
                     field_schema=field_schema,
                 )
+                LOGGER.info("Ensured payload index: %s", field_name)
             except Exception as ex:
                 message = str(ex).lower()
 
@@ -331,6 +337,7 @@ class Ingester:
     # ------------------------------------------------------------------
 
     def run(self, source_configs: list[dict]) -> None:
+        LOGGER.info("Starting ingest into collection: %s", COLLECTION_NAME)
         self.ensure_collection()
         self.ensure_payload_indexes()
 
@@ -344,7 +351,7 @@ class Ingester:
             source_path = source_config["path"]
 
             if not source_path.exists():
-                print(f"Skipped optional missing source: {source_path}")
+                LOGGER.info("Skipped optional missing source: %s", source_path)
                 continue
 
             for file_path in iter_markdown_files(source_path):
@@ -352,6 +359,7 @@ class Ingester:
                 seen_file_ids.add(metadata["file_id"])
 
                 if self.is_file_unchanged(metadata["file_id"], metadata["file_hash"]):
+                    LOGGER.info("Skipped unchanged file: %s", metadata["source_path"])
                     skipped_files += 1
                     continue
 
@@ -362,6 +370,12 @@ class Ingester:
                 self._points.extend(file_points)
                 indexed_chunks += len(file_points)
                 indexed_files += 1
+                LOGGER.info(
+                    "Staged changed file: %s chunks=%s skipped_empty_chunks=%s",
+                    metadata["source_path"],
+                    len(file_points),
+                    file_skipped_empty_chunks,
+                )
 
                 if len(self._points) >= BATCH_SIZE:
                     self.flush_points()
@@ -373,12 +387,14 @@ class Ingester:
 
         orphaned_files = self.cleanup_orphaned_file_points(seen_file_ids)
 
-        print(
+        summary = (
             f"Indexed {indexed_chunks} chunks from {indexed_files} changed files; "
             f"skipped {skipped_files} unchanged files; "
             f"skipped {skipped_empty_chunks} empty chunks; "
             f"removed {orphaned_files} orphaned files"
         )
+        LOGGER.info(summary)
+        print(summary)
 
 
 def main() -> None:
