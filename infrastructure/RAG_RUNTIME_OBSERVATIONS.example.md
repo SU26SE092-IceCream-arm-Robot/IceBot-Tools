@@ -21,6 +21,7 @@ Machine profile: `IceBot-Tools/.local/MACHINE_PROFILE.md`
 - Duration:
 - Result:
 - Follow-up idea:
+- Snapshot log: `IceBot-Tools/logs/system/system_snapshot.log`
 
 ## Example Topics To Track
 
@@ -30,3 +31,15 @@ Machine profile: `IceBot-Tools/.local/MACHINE_PROFILE.md`
 - MCP timeout behavior with reranker enabled
 - MCP behavior with reranker disabled
 - CPU/RAM/GPU pressure during local runs
+
+## Measuring Local Runtime
+
+Run from `IceBot-Tools`:
+
+```powershell
+.\scripts\system_snapshot.ps1 -Label "before test"
+# Run or trigger the workload.
+.\scripts\system_snapshot.ps1 -Label "after test"
+```
+
+For MCP reranker timeout debugging, take snapshots before the MCP request and immediately after the timeout or while the process is still loading.

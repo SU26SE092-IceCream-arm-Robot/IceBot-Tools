@@ -12,11 +12,37 @@ Keep scripts narrow and explicit. Do not hide important destructive behavior beh
   - Qdrant is pinned to `qdrant/qdrant:v1.18.1` instead of `latest`.
   - Qdrant ports are bound to `127.0.0.1` because this local setup has no Qdrant auth configured.
 
+- `system_snapshot.ps1`
+  - Records a point-in-time CPU/RAM/GPU/process snapshot for local debugging.
+  - Writes to console and appends to `IceBot-Tools/logs/system/system_snapshot.log`.
+  - Use it before/during/after RAG ingest, MCP, reranker, or Docker debugging.
+  - Accepts `-Label` to identify the measurement.
+
 Linux/macOS equivalent:
 
 ```bash
 docker compose -f ./docker/docker-compose.yml up -d
 ```
+
+## System Snapshot
+
+Use this when a RAG command, MCP server, reranker, or Docker service feels slow and you need data for `.local/RAG_RUNTIME_OBSERVATIONS.md`.
+
+Run from `IceBot-Tools`:
+
+```powershell
+.\scripts\system_snapshot.ps1 -Label "before MCP reranker test"
+```
+
+Example debug sequence:
+
+```powershell
+.\scripts\system_snapshot.ps1 -Label "before MCP reranker"
+# Trigger the MCP retrieval from the IDE/Codex.
+.\scripts\system_snapshot.ps1 -Label "after MCP reranker timeout"
+```
+
+The script uses `nvidia-smi` for GPU/VRAM metrics when available. If `nvidia-smi` is unavailable, GPU metrics are reported as unavailable.
 
 ## Qdrant Image Update / Recreate
 
