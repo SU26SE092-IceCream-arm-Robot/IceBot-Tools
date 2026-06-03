@@ -67,3 +67,4 @@ These caps apply in `raglib/vector_store.py`, so they cover `context.py`, `searc
 - Lower `--candidate-limit` if local search feels too slow.
 - CLI commands start a new Python process each run, so the embedding model and reranker are loaded each time.
 - `Qwen3-Reranker-0.6B` is not lightweight. Use `--no-rerank` for quick debugging when precision is less important.
+- MCP tool calls have a host timeout. If reranker cold start exceeds that timeout, use `use_reranker=false` for MCP/IDE retrieval and reserve reranking for warmed long-running sessions or direct CLI experimentation.

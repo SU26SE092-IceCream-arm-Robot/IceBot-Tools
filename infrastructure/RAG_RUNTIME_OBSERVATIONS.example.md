@@ -21,3 +21,12 @@ Machine profile: `IceBot-Tools/.local/MACHINE_PROFILE.md`
 - Duration:
 - Result:
 - Follow-up idea:
+
+## Example Topics To Track
+
+- ingest chunk count and duration
+- embedding model cold-start cost
+- reranker model cold-start cost
+- MCP timeout behavior with reranker enabled
+- MCP behavior with reranker disabled
+- CPU/RAM/GPU pressure during local runs

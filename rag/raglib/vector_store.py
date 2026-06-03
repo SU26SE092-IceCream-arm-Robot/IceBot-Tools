@@ -81,12 +81,13 @@ def retrieve_context(
         prompt_name="query",
     ).tolist()
 
-    results = client.search(
+    response = client.query_points(
         collection_name=COLLECTION_NAME,
-        query_vector=query_vector,
+        query=query_vector,
         query_filter=build_filter(include_vault, statuses, source_types, path_contains),
         limit=max(limit, candidate_limit) if reranker is not None else limit,
     )
+    results = response.points
 
     results = rerank_results(reranker, query, results)
     return results[:limit]
