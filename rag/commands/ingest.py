@@ -195,9 +195,13 @@ class Ingester:
             "authority": PayloadSchemaType.KEYWORD,
             "status": PayloadSchemaType.KEYWORD,
             "source_type": PayloadSchemaType.KEYWORD,
+            "source_group": PayloadSchemaType.KEYWORD,
+            "doc_type": PayloadSchemaType.KEYWORD,
             "source": PayloadSchemaType.KEYWORD,
             "file_id": PayloadSchemaType.KEYWORD,
             "file_hash": PayloadSchemaType.KEYWORD,
+            "source_of_truth": PayloadSchemaType.BOOL,
+            "is_overview": PayloadSchemaType.BOOL,
             "source_path": PayloadSchemaType.TEXT,
         }
 
@@ -328,6 +332,7 @@ class Ingester:
                         "chunk_index": index,
                         "section_index": chunk["section_index"],
                         "section_path": chunk["section_path"],
+                        "is_overview": chunk["section_index"] == 0,
                         "text": chunk_text,
                     },
                 )

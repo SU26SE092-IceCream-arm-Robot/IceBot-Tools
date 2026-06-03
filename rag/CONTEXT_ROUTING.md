@@ -21,6 +21,14 @@ RAG is for retrieving relevant project knowledge. It should not retrieve everyth
 
 Do not route every prompt through RAG.
 
+Use lazy retrieval:
+
+1. Start with a precise query over official sources.
+2. Add metadata filters such as `--source-group docs`, `--doc-type api`, `--source-type backend-doc`, or `--path-contains IOT_CONTRACT` when the topic is known.
+3. Use `--exclude-overview` when generic overview chunks outrank specific rule chunks.
+4. Read backend `docs/RAG_CONTEXT_MAP.md` only when the right document family is unclear.
+5. Enable reranking selectively for difficult queries, keeping MCP candidate limits low on memory-constrained machines.
+
 Good RAG sources:
 
 - architecture docs
@@ -52,6 +60,8 @@ Vault is useful but lower authority.
 Wrong context is worse than missing context.
 
 If the right source is unclear, prefer no retrieved context and state the uncertainty instead of mixing official docs with stale or rejected notes.
+
+Do not treat `RAG_CONTEXT_MAP.md` as a mandatory first read. It is a fallback router, not the main retrieval path.
 
 Score thresholds only answer this question:
 

@@ -48,8 +48,12 @@ Every ingested chunk should include:
 - `source`
 - `source_path`
 - `source_type`
+- `source_group`
+- `doc_type`
 - `authority`
+- `source_of_truth`
 - `status`
+- `is_overview`
 - `chunk_index`
 - `section_index`
 - `section_path`
@@ -73,9 +77,13 @@ Currently excluded:
 | `authority` | keyword | default official-only retrieval |
 | `status` | keyword | current/draft/raw/future/rejected filtering |
 | `source_type` | keyword | backend-doc/project-doc/vault filtering |
+| `source_group` | keyword | broad docs/vault/code/logs filtering |
+| `doc_type` | keyword | api/flow/contract/architecture/domain filtering |
 | `source` | keyword | filename filtering if needed |
 | `file_id` | keyword | incremental re-index and orphan cleanup |
 | `file_hash` | keyword | unchanged-file skip checks |
+| `source_of_truth` | bool | distinguish accepted sources from advisory notes |
+| `is_overview` | bool | allow specific retrieval to skip generic overview chunks |
 | `source_path` | text | `--path-contains` matching |
 
 ## Markdown Chunking
@@ -99,6 +107,7 @@ Defaults are `800` and `120`, preserving the current behavior. Changing these va
 ## Incremental Indexing
 
 - Do not run ingest automatically after documentation-only edits unless the user explicitly asks for ingest. Ingest mutates the local vector database and can be slow on lower-memory machines.
+- After metadata schema changes, old chunks will not have the new payload fields until ingest is run manually.
 - After doc changes, normally provide this manual command instead:
 
 ```powershell

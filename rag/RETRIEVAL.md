@@ -18,11 +18,22 @@ Vault should be opt-in:
 
 ```powershell
 python .\rag\commands\search.py "payment flow" --source-type backend-doc
+python .\rag\commands\search.py "authentication routes" --source-group docs --doc-type api
 python .\rag\commands\search.py "business flow" --source-type project-doc
 python .\rag\commands\search.py "robot workflow" --include-vault --source-type vault
 python .\rag\commands\search.py "iot contract" --path-contains IOT_CONTRACT
+python .\rag\commands\search.py "forgot password API" --doc-type api --exclude-overview
 python .\rag\commands\context.py "payment flow" --format markdown
 ```
+
+Useful fields:
+
+- `source_group`: broad origin, such as `docs`, `vault`, `code`, or `logs`.
+- `doc_type`: document intent, such as `api`, `flow`, `contract`, `architecture`, `domain`, or `decision`.
+- `source_type`: source folder class, such as `backend-doc`, `project-doc`, or `vault`.
+- `is_overview`: true for first/root chunks that often contain generic introduction text.
+
+Prefer metadata and path filters before increasing reranker candidate limits.
 
 ## Reranking
 
@@ -60,6 +71,7 @@ These caps apply in `raglib/vector_store.py`, so they cover `context.py`, `searc
 - `commands/ask.py` is for generating an answer from retrieved chunks through OpenAI.
 - `mcp_server.py` is long-running and reuses embedding/reranker models as process-level singletons.
 - Retrieval outputs include `section_index` and `section_path` from Markdown header-aware chunking when available.
+- Retrieval outputs include `source_group`, `doc_type`, `source_of_truth`, and `is_overview` after the collection is re-ingested with the current metadata schema.
 
 ## Runtime Notes
 

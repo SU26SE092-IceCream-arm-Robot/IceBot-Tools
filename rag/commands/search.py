@@ -41,6 +41,21 @@ def parse_args():
         help="Filter by source_type. Can be repeated, e.g. --source-type backend-doc.",
     )
     parser.add_argument(
+        "--source-group",
+        action="append",
+        help="Filter by source_group. Can be repeated, e.g. --source-group docs.",
+    )
+    parser.add_argument(
+        "--doc-type",
+        action="append",
+        help="Filter by doc_type. Can be repeated, e.g. --doc-type api.",
+    )
+    parser.add_argument(
+        "--exclude-overview",
+        action="store_true",
+        help="Exclude overview chunks when searching for specific rules or APIs.",
+    )
+    parser.add_argument(
         "--path-contains",
         action="append",
         help="Filter by source_path text. Can be repeated, e.g. --path-contains IOT_CONTRACT.",
@@ -58,7 +73,10 @@ def main() -> None:
         include_vault=args.include_vault,
         statuses=args.status,
         source_types=args.source_type,
+        source_groups=args.source_group,
+        doc_types=args.doc_type,
         path_contains=args.path_contains,
+        include_overview=not args.exclude_overview,
         limit=args.limit,
         candidate_limit=args.candidate_limit,
         use_reranker=not args.no_rerank,
@@ -74,8 +92,12 @@ def main() -> None:
         print("Source:", payload.get("source"))
         print("Path:", payload.get("source_path"))
         print("Type:", payload.get("source_type"))
+        print("Group:", payload.get("source_group"))
+        print("Doc type:", payload.get("doc_type"))
         print("Authority:", payload.get("authority"))
+        print("Source of truth:", payload.get("source_of_truth"))
         print("Status:", payload.get("status"))
+        print("Overview:", payload.get("is_overview"))
         print("Section index:", payload.get("section_index"))
         print("Section path:", payload.get("section_path"))
         print("-" * 80)

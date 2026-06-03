@@ -3,6 +3,28 @@ from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
 
+DOC_TYPE_BY_NAME = {
+    "AGENTS.md": "agent-guide",
+    "ARCHITECTURE.md": "architecture",
+    "API_SURFACE_RULES.md": "api",
+    "AUTHORIZATION_RULES.md": "authorization",
+    "BOUNDARY_CONTEXTS.md": "domain",
+    "BUSINESS_FLOWS.md": "flow",
+    "DATA_MODELING_RULES.md": "data-modeling",
+    "DEPENDENCY_RULES.md": "dependency",
+    "DOCUMENTATION_RULES.md": "documentation",
+    "IDEMPOTENCY_RETRY_RULES.md": "idempotency-retry",
+    "IOT_CONTRACT.md": "contract",
+    "JSON_FIELD_RULES.md": "json",
+    "LOCAL_EDGE_RUNTIME_ERD.md": "local-edge-erd",
+    "MULTI_TENANCY_RULES.md": "multi-tenancy",
+    "NAMING_RULES.md": "naming",
+    "RAG_CONTEXT_MAP.md": "routing",
+    "SYSTEM_FLOWS.md": "flow",
+    "WORKING_PROTOCOL.md": "working-protocol",
+}
+
+
 def calculate_file_hash(file_path: Path) -> str:
     return hashlib.sha256(file_path.read_bytes()).hexdigest()
 
@@ -67,6 +89,42 @@ def get_vault_status(file_path: Path, workspace_root: Path) -> str:
     return "exploration"
 
 
+def get_source_group(source_type: str) -> str:
+    if source_type in {"backend-doc", "project-doc"}:
+        return "docs"
+    if source_type == "vault":
+        return "vault"
+    if source_type == "code":
+        return "code"
+    if source_type == "log":
+        return "logs"
+
+    return source_type
+
+
+def get_doc_type(file_path: Path, source_type: str, workspace_root: Path) -> str:
+    file_name = file_path.name
+
+    if file_name in DOC_TYPE_BY_NAME:
+        return DOC_TYPE_BY_NAME[file_name]
+
+    if source_type == "vault":
+        relative_path = build_source_path(file_path, workspace_root).lower()
+
+        if "/raw/" in relative_path:
+            return "raw"
+        if "/decisions/" in relative_path:
+            return "decision"
+        if "/learning/" in relative_path:
+            return "learning"
+        if "/evolution/" in relative_path:
+            return "evolution"
+        if "/research/" in relative_path:
+            return "research"
+
+    return "reference"
+
+
 def is_excluded_source(file_path: Path, workspace_root: Path, excluded_paths: set[str]) -> bool:
     relative_path = build_source_path(file_path, workspace_root)
     return relative_path in excluded_paths
@@ -76,6 +134,7 @@ def build_metadata(source_config: dict, file_path: Path, workspace_root: Path) -
     relative_path = build_source_path(file_path, workspace_root, source_config["path"])
     source_type = source_config["source_type"]
     status = source_config["status"]
+    authority = source_config["authority"]
 
     if source_type == "vault":
         status = get_vault_status(file_path, workspace_root)
@@ -86,6 +145,9 @@ def build_metadata(source_config: dict, file_path: Path, workspace_root: Path) -
         "source": file_path.name,
         "source_path": relative_path,
         "source_type": source_type,
-        "authority": source_config["authority"],
+        "source_group": get_source_group(source_type),
+        "doc_type": get_doc_type(file_path, source_type, workspace_root),
+        "authority": authority,
+        "source_of_truth": authority == "official",
         "status": status,
     }

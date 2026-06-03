@@ -42,6 +42,21 @@ def parse_args():
         help="Filter by source_type. Can be repeated, e.g. --source-type backend-doc.",
     )
     parser.add_argument(
+        "--source-group",
+        action="append",
+        help="Filter by source_group. Can be repeated, e.g. --source-group docs.",
+    )
+    parser.add_argument(
+        "--doc-type",
+        action="append",
+        help="Filter by doc_type. Can be repeated, e.g. --doc-type api.",
+    )
+    parser.add_argument(
+        "--exclude-overview",
+        action="store_true",
+        help="Exclude overview chunks when retrieving specific rules or APIs.",
+    )
+    parser.add_argument(
         "--path-contains",
         action="append",
         help="Filter by source_path text. Can be repeated, e.g. --path-contains IOT_CONTRACT.",
@@ -62,8 +77,12 @@ def result_to_dict(result):
         "source": payload.get("source"),
         "source_path": payload.get("source_path"),
         "source_type": payload.get("source_type"),
+        "source_group": payload.get("source_group"),
+        "doc_type": payload.get("doc_type"),
         "authority": payload.get("authority"),
+        "source_of_truth": payload.get("source_of_truth"),
         "status": payload.get("status"),
+        "is_overview": payload.get("is_overview"),
         "chunk_index": payload.get("chunk_index"),
         "section_index": payload.get("section_index"),
         "section_path": payload.get("section_path"),
@@ -87,8 +106,12 @@ def print_markdown_context(query: str, context_items: list[dict]) -> None:
         print(f"- Source: `{item['source']}`")
         print(f"- Path: `{item['source_path']}`")
         print(f"- Type: `{item['source_type']}`")
+        print(f"- Group: `{item['source_group']}`")
+        print(f"- Doc type: `{item['doc_type']}`")
         print(f"- Authority: `{item['authority']}`")
+        print(f"- Source of truth: `{item['source_of_truth']}`")
         print(f"- Status: `{item['status']}`")
+        print(f"- Overview: `{item['is_overview']}`")
         print(f"- Chunk: `{item['chunk_index']}`")
         print(f"- Section index: `{item['section_index']}`")
         print(f"- Section path: `{item['section_path']}`")
@@ -109,7 +132,10 @@ def main() -> None:
         include_vault=args.include_vault,
         statuses=args.status,
         source_types=args.source_type,
+        source_groups=args.source_group,
+        doc_types=args.doc_type,
         path_contains=args.path_contains,
+        include_overview=not args.exclude_overview,
         limit=args.limit,
         candidate_limit=args.candidate_limit,
         use_reranker=not args.no_rerank,

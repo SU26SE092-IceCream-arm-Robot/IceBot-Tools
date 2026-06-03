@@ -64,7 +64,10 @@ def retrieve_context(
     include_vault: bool = False,
     statuses: list[str] | None = None,
     source_types: list[str] | None = None,
+    source_groups: list[str] | None = None,
+    doc_types: list[str] | None = None,
     path_contains: list[str] | None = None,
+    include_overview: bool = True,
     limit: int = 5,
     candidate_limit: int = 100,
     use_reranker: bool = True,
@@ -84,7 +87,15 @@ def retrieve_context(
     response = client.query_points(
         collection_name=COLLECTION_NAME,
         query=query_vector,
-        query_filter=build_filter(include_vault, statuses, source_types, path_contains),
+        query_filter=build_filter(
+            include_vault,
+            statuses,
+            source_types,
+            source_groups,
+            doc_types,
+            path_contains,
+            include_overview,
+        ),
         limit=max(limit, candidate_limit) if reranker is not None else limit,
     )
     results = response.points

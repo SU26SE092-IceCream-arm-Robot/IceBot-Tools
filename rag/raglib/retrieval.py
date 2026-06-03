@@ -5,7 +5,10 @@ def build_filter(
     include_vault: bool,
     statuses: list[str] | None,
     source_types: list[str] | None = None,
+    source_groups: list[str] | None = None,
+    doc_types: list[str] | None = None,
     path_contains: list[str] | None = None,
+    include_overview: bool = True,
 ) -> Filter:
     conditions = []
 
@@ -37,6 +40,30 @@ def build_filter(
             FieldCondition(
                 key="source_type",
                 match=MatchAny(any=source_types),
+            )
+        )
+
+    if source_groups:
+        conditions.append(
+            FieldCondition(
+                key="source_group",
+                match=MatchAny(any=source_groups),
+            )
+        )
+
+    if doc_types:
+        conditions.append(
+            FieldCondition(
+                key="doc_type",
+                match=MatchAny(any=doc_types),
+            )
+        )
+
+    if not include_overview:
+        conditions.append(
+            FieldCondition(
+                key="is_overview",
+                match=MatchValue(value=False),
             )
         )
 
