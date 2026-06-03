@@ -71,7 +71,7 @@ These caps apply in `raglib/vector_store.py`, so they cover `context.py`, `searc
 - `commands/ask.py` is for generating an answer from retrieved chunks through OpenAI.
 - `mcp_server.py` is long-running and reuses embedding/reranker models as process-level singletons.
 - Retrieval outputs include `section_index` and `section_path` from Markdown header-aware chunking when available.
-- Retrieval outputs include `source_group`, `doc_type`, `source_of_truth`, and `is_overview` after the collection is re-ingested with the current metadata schema.
+- Retrieval outputs include `source_group`, `doc_type`, and `is_overview` after the collection is re-ingested with the current metadata schema.
 
 ## Runtime Notes
 

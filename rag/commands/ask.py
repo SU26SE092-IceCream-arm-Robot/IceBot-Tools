@@ -89,7 +89,6 @@ def format_context(results) -> str:
                     f"group: {payload.get('source_group')}",
                     f"doc_type: {payload.get('doc_type')}",
                     f"authority: {payload.get('authority')}",
-                    f"source_of_truth: {payload.get('source_of_truth')}",
                     f"status: {payload.get('status')}",
                     f"is_overview: {payload.get('is_overview')}",
                     f"section_index: {payload.get('section_index')}",

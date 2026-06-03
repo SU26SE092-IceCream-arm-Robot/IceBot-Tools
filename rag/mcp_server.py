@@ -20,7 +20,6 @@ def result_to_dict(result) -> dict[str, Any]:
         "source_group": payload.get("source_group"),
         "doc_type": payload.get("doc_type"),
         "authority": payload.get("authority"),
-        "source_of_truth": payload.get("source_of_truth"),
         "status": payload.get("status"),
         "is_overview": payload.get("is_overview"),
         "chunk_index": payload.get("chunk_index"),

@@ -148,6 +148,5 @@ def build_metadata(source_config: dict, file_path: Path, workspace_root: Path) -
         "source_group": get_source_group(source_type),
         "doc_type": get_doc_type(file_path, source_type, workspace_root),
         "authority": authority,
-        "source_of_truth": authority == "official",
         "status": status,
     }

@@ -51,7 +51,6 @@ Every ingested chunk should include:
 - `source_group`
 - `doc_type`
 - `authority`
-- `source_of_truth`
 - `status`
 - `is_overview`
 - `chunk_index`
@@ -82,7 +81,6 @@ Currently excluded:
 | `source` | keyword | filename filtering if needed |
 | `file_id` | keyword | incremental re-index and orphan cleanup |
 | `file_hash` | keyword | unchanged-file skip checks |
-| `source_of_truth` | bool | distinguish accepted sources from advisory notes |
 | `is_overview` | bool | allow specific retrieval to skip generic overview chunks |
 | `source_path` | text | `--path-contains` matching |
 

@@ -95,7 +95,6 @@ def main() -> None:
         print("Group:", payload.get("source_group"))
         print("Doc type:", payload.get("doc_type"))
         print("Authority:", payload.get("authority"))
-        print("Source of truth:", payload.get("source_of_truth"))
         print("Status:", payload.get("status"))
         print("Overview:", payload.get("is_overview"))
         print("Section index:", payload.get("section_index"))

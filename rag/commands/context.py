@@ -80,7 +80,6 @@ def result_to_dict(result):
         "source_group": payload.get("source_group"),
         "doc_type": payload.get("doc_type"),
         "authority": payload.get("authority"),
-        "source_of_truth": payload.get("source_of_truth"),
         "status": payload.get("status"),
         "is_overview": payload.get("is_overview"),
         "chunk_index": payload.get("chunk_index"),
@@ -109,7 +108,6 @@ def print_markdown_context(query: str, context_items: list[dict]) -> None:
         print(f"- Group: `{item['source_group']}`")
         print(f"- Doc type: `{item['doc_type']}`")
         print(f"- Authority: `{item['authority']}`")
-        print(f"- Source of truth: `{item['source_of_truth']}`")
         print(f"- Status: `{item['status']}`")
         print(f"- Overview: `{item['is_overview']}`")
         print(f"- Chunk: `{item['chunk_index']}`")

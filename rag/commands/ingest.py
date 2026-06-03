@@ -200,7 +200,6 @@ class Ingester:
             "source": PayloadSchemaType.KEYWORD,
             "file_id": PayloadSchemaType.KEYWORD,
             "file_hash": PayloadSchemaType.KEYWORD,
-            "source_of_truth": PayloadSchemaType.BOOL,
             "is_overview": PayloadSchemaType.BOOL,
             "source_path": PayloadSchemaType.TEXT,
         }
