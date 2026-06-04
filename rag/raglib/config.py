@@ -60,6 +60,9 @@ MAX_RETRIEVAL_LIMIT = int(os.getenv("RAG_MAX_RETRIEVAL_LIMIT", "10"))
 MAX_CANDIDATE_LIMIT = int(os.getenv("RAG_MAX_CANDIDATE_LIMIT", "100"))
 
 EMBEDDING_MODEL = os.getenv("RAG_EMBEDDING_MODEL", "Qwen/Qwen3-Embedding-0.6B")
+SPARSE_MODEL = os.getenv("RAG_SPARSE_MODEL", "Qdrant/bm25")
+ENABLE_HYBRID = parse_bool_env("RAG_ENABLE_HYBRID", default=True)
+HYBRID_RRF_K = int(os.getenv("RAG_HYBRID_RRF_K", "60"))
 RERANKER_MODEL = os.getenv("RAG_RERANKER_MODEL", "Qwen/Qwen3-Reranker-0.6B")
 DEFAULT_LLM_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 DEFAULT_QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
@@ -96,3 +99,4 @@ def get_collection_lane(lane: str = "docs") -> dict:
 def setup_cache_env() -> None:
     os.environ.setdefault("HF_HOME", str(CACHE_ROOT / "huggingface"))
     os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", str(CACHE_ROOT / "sentence-transformers"))
+    os.environ.setdefault("FASTEMBED_CACHE_PATH", str(CACHE_ROOT / "fastembed"))

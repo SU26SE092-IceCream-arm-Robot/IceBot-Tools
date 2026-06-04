@@ -32,6 +32,11 @@ def parse_args():
         help="Disable reranking and return vector search order.",
     )
     parser.add_argument(
+        "--no-hybrid",
+        action="store_true",
+        help="Disable hybrid dense+sparse retrieval and use dense vector search only.",
+    )
+    parser.add_argument(
         "--include-vault",
         action="store_true",
         help="Include Vault draft notes in results. Default searches official docs only.",
@@ -93,6 +98,7 @@ def main() -> None:
         limit=args.limit,
         candidate_limit=args.candidate_limit,
         use_reranker=not args.no_rerank,
+        use_hybrid=not args.no_hybrid,
     )
 
     for i, result in enumerate(results, 1):
@@ -100,7 +106,8 @@ def main() -> None:
 
         print("=" * 80)
         print(f"Result {i}")
-        print("Vector score:", payload.get("vector_score", result.score))
+        print("Vector score:", payload.get("vector_score"))
+        print("Hybrid score:", payload.get("hybrid_score"))
         print("Rerank score:", payload.get("rerank_score"))
         print("Source:", payload.get("source"))
         print("Path:", payload.get("source_path"))

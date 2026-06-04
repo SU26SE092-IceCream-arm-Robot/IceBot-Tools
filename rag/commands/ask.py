@@ -38,6 +38,11 @@ def parse_args():
         help="Disable reranking and answer from vector search order.",
     )
     parser.add_argument(
+        "--no-hybrid",
+        action="store_true",
+        help="Disable hybrid dense+sparse retrieval and use dense vector search only.",
+    )
+    parser.add_argument(
         "--include-vault",
         action="store_true",
         help="Include Vault draft notes. Default answers from official docs only.",
@@ -110,7 +115,8 @@ def format_context(results) -> str:
                     f"symbol_name: {payload.get('symbol_name')}",
                     f"start_line: {payload.get('start_line')}",
                     f"end_line: {payload.get('end_line')}",
-                    f"vector_score: {payload.get('vector_score', result.score)}",
+                    f"vector_score: {payload.get('vector_score')}",
+                    f"hybrid_score: {payload.get('hybrid_score')}",
                     f"rerank_score: {payload.get('rerank_score')}",
                     "text:",
                     payload.get("text") or "",
@@ -146,6 +152,7 @@ def main() -> None:
         limit=args.limit,
         candidate_limit=args.candidate_limit,
         use_reranker=not args.no_rerank,
+        use_hybrid=not args.no_hybrid,
     )
 
     if not results:

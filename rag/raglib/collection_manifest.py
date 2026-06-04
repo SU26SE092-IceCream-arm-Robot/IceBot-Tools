@@ -11,6 +11,9 @@ def build_collection_manifest(
     collection_version: str,
     embedding_model: str,
     embedding_dimension: int,
+    vector_schema: str,
+    hybrid_enabled: bool,
+    sparse_model: str | None,
 ) -> dict:
     return {
         "collection_lane": collection_lane,
@@ -19,9 +22,12 @@ def build_collection_manifest(
         "collection_version": collection_version,
         "embedding_model": embedding_model,
         "embedding_dimension": embedding_dimension,
+        "vector_schema": vector_schema,
+        "hybrid_enabled": hybrid_enabled,
+        "sparse_model": sparse_model,
         "distance": "cosine",
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "schema_version": 1,
+        "schema_version": 2,
     }
 
 
@@ -43,7 +49,17 @@ def write_collection_manifest(manifest_path: Path, manifest: dict) -> None:
 def validate_collection_manifest(manifest: dict, expected: dict) -> None:
     mismatches = []
 
-    for key in ["collection_lane", "collection_name", "collection_version", "embedding_model", "embedding_dimension"]:
+    for key in [
+        "collection_lane",
+        "collection_name",
+        "collection_version",
+        "embedding_model",
+        "embedding_dimension",
+        "vector_schema",
+        "hybrid_enabled",
+        "sparse_model",
+        "schema_version",
+    ]:
         if manifest.get(key) != expected[key]:
             mismatches.append(f"{key}: manifest={manifest.get(key)!r}, current={expected[key]!r}")
 

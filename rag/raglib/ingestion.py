@@ -11,6 +11,9 @@ from qdrant_client.models import (
     MatchValue,
     PayloadSchemaType,
     PointStruct,
+    SparseIndexParams,
+    SparseVector,
+    SparseVectorParams,
     VectorParams,
 )
 
@@ -20,7 +23,14 @@ from raglib.collection_manifest import (
     validate_collection_manifest,
     write_collection_manifest,
 )
-from raglib.config import DEFAULT_QDRANT_URL, EMBEDDING_MODEL, TOOLS_DIR, WORKSPACE_ROOT
+from raglib.config import (
+    DEFAULT_QDRANT_URL,
+    EMBEDDING_MODEL,
+    ENABLE_HYBRID,
+    SPARSE_MODEL,
+    TOOLS_DIR,
+    WORKSPACE_ROOT,
+)
 from raglib.source_metadata import build_metadata
 
 
@@ -107,6 +117,7 @@ class BaseIngester(ABC):
         self.collection_lane = collection_lane
         self.logger = logger
         self.model = SentenceTransformer(EMBEDDING_MODEL, trust_remote_code=True)
+        self.sparse_model = self.load_sparse_model() if ENABLE_HYBRID else None
         self.client = QdrantClient(url=DEFAULT_QDRANT_URL)
         self.embedding_dimension = len(self.model.encode("dimension probe"))
         self._points: list[PointStruct] = []
@@ -122,6 +133,17 @@ class BaseIngester(ABC):
             self.missing_source_message,
         )
 
+    def load_sparse_model(self):
+        try:
+            from fastembed import SparseTextEmbedding
+        except ImportError as ex:
+            raise SystemExit(
+                "Hybrid retrieval is enabled but fastembed is not installed.\n"
+                "Run `pip install -r requirements.txt` or set RAG_ENABLE_HYBRID=false."
+            ) from ex
+
+        return SparseTextEmbedding(model_name=SPARSE_MODEL)
+
     def build_collection_manifest(self) -> dict:
         return build_collection_manifest(
             collection_lane=self.collection_lane_name,
@@ -130,6 +152,9 @@ class BaseIngester(ABC):
             collection_version=self.collection_lane["version"],
             embedding_model=EMBEDDING_MODEL,
             embedding_dimension=self.embedding_dimension,
+            vector_schema="named_dense_sparse" if ENABLE_HYBRID else "named_dense",
+            hybrid_enabled=ENABLE_HYBRID,
+            sparse_model=SPARSE_MODEL if ENABLE_HYBRID else None,
         )
 
     def ensure_collection(self) -> None:
@@ -137,12 +162,22 @@ class BaseIngester(ABC):
 
         if not self.client.collection_exists(collection_name=self.collection_name):
             self.logger.info("Creating Qdrant collection: %s", self.collection_name)
+            sparse_vectors_config = None
+
+            if ENABLE_HYBRID:
+                sparse_vectors_config = {
+                    "sparse": SparseVectorParams(index=SparseIndexParams()),
+                }
+
             self.client.create_collection(
                 collection_name=self.collection_name,
-                vectors_config=VectorParams(
-                    size=self.embedding_dimension,
-                    distance=Distance.COSINE,
-                ),
+                vectors_config={
+                    "dense": VectorParams(
+                        size=self.embedding_dimension,
+                        distance=Distance.COSINE,
+                    ),
+                },
+                sparse_vectors_config=sparse_vectors_config,
             )
             write_collection_manifest(manifest_path, self.build_collection_manifest())
             self.logger.info("Wrote collection manifest: %s", manifest_path)
@@ -282,13 +317,29 @@ class BaseIngester(ABC):
         self._points.clear()
         return flushed_count
 
+    def build_point_vector(self, chunk_text: str) -> dict:
+        dense_vector = self.model.encode(chunk_text).tolist()
+        point_vector = {
+            "dense": dense_vector,
+        }
+
+        if self.sparse_model is None:
+            return point_vector
+
+        sparse_embedding = next(iter(self.sparse_model.embed([chunk_text])))
+        point_vector["sparse"] = SparseVector(
+            indices=list(sparse_embedding.indices),
+            values=list(sparse_embedding.values),
+        )
+        return point_vector
+
     def build_file_points(self, metadata: dict, file_path: Path) -> tuple[list[PointStruct], int]:
         chunks, skipped_empty_chunks = self.build_chunks(file_path)
         file_points = []
 
         for index, chunk in enumerate(chunks):
             chunk_text = chunk["text"]
-            vector = self.model.encode(chunk_text).tolist()
+            vector = self.build_point_vector(chunk_text)
             payload = {
                 **metadata,
                 "chunk_index": index,

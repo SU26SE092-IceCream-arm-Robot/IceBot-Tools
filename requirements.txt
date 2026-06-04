@@ -1,4 +1,5 @@
 qdrant-client==1.18.0
+fastembed==0.8.0
 sentence-transformers==5.5.1
 langchain-text-splitters==1.1.2
 pypdf==6.12.2

@@ -33,6 +33,11 @@ def parse_args():
         help="Disable reranking and return vector search order.",
     )
     parser.add_argument(
+        "--no-hybrid",
+        action="store_true",
+        help="Disable hybrid dense+sparse retrieval and use dense vector search only.",
+    )
+    parser.add_argument(
         "--include-vault",
         action="store_true",
         help="Include Vault draft notes. Default retrieves official docs only.",
@@ -102,7 +107,8 @@ def result_to_dict(result):
         "symbol_name": payload.get("symbol_name"),
         "start_line": payload.get("start_line"),
         "end_line": payload.get("end_line"),
-        "vector_score": payload.get("vector_score", result.score),
+        "vector_score": payload.get("vector_score"),
+        "hybrid_score": payload.get("hybrid_score"),
         "rerank_score": payload.get("rerank_score"),
         "text": payload.get("text") or "",
     }
@@ -135,6 +141,7 @@ def print_markdown_context(query: str, context_items: list[dict]) -> None:
         print(f"- Symbol: `{item['symbol_kind']} {item['symbol_name']}`")
         print(f"- Lines: `{item['start_line']}-{item['end_line']}`")
         print(f"- Vector score: `{item['vector_score']}`")
+        print(f"- Hybrid score: `{item['hybrid_score']}`")
         print(f"- Rerank score: `{item['rerank_score']}`")
         print()
         print(item["text"])
@@ -160,6 +167,7 @@ def main() -> None:
         limit=args.limit,
         candidate_limit=args.candidate_limit,
         use_reranker=not args.no_rerank,
+        use_hybrid=not args.no_hybrid,
     )
     context_items = [result_to_dict(result) for result in results]
 

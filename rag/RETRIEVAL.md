@@ -29,6 +29,8 @@ python .\rag\commands\search.py "business flow" --source-type project-doc
 python .\rag\commands\search.py "robot workflow" --include-vault --source-type vault
 python .\rag\commands\search.py "iot contract" --path-contains IOT_CONTRACT
 python .\rag\commands\search.py "forgot password API" --doc-type api --exclude-overview
+python .\rag\commands\search.py "PaymentSessionsController" --lane code
+python .\rag\commands\search.py "PaymentSessionsController" --lane code --no-hybrid
 python .\rag\commands\context.py "payment flow" --format markdown
 python .\rag\commands\search.py --lane code "PaymentSessionsController"
 python .\rag\commands\context.py --lane code "where refresh token is rotated" --format markdown
@@ -43,6 +45,31 @@ Useful fields:
 - Code lane outputs may include `language`, `namespace`, `symbol_kind`, `symbol_name`, `start_line`, and `end_line`.
 
 Prefer metadata and path filters before increasing reranker candidate limits.
+
+## Hybrid Retrieval
+
+By default retrieval uses Qdrant-native hybrid search when `RAG_ENABLE_HYBRID=true`:
+
+```text
+query
+  -> dense embedding
+  -> BM25 sparse embedding
+  -> Qdrant dense prefetch + sparse prefetch
+  -> RRF fusion
+  -> optional cross-encoder rerank
+  -> top-k context
+```
+
+Dense vectors use `Qwen/Qwen3-Embedding-0.6B`. Sparse vectors use `Qdrant/bm25` through `fastembed`.
+
+Use `--no-hybrid` to compare against dense-only retrieval or debug hybrid behavior:
+
+```powershell
+python .\rag\commands\search.py --lane code "PaymentSessionsController" --no-hybrid
+python .\rag\commands\search.py --lane code "PaymentSessionsController"
+```
+
+Hybrid retrieval is especially useful for code and exact keywords such as class names, endpoint paths, enum values, field names, and file names. Semantic docs questions can still work well with dense retrieval, but hybrid is usually cheap enough to keep enabled.
 
 ## Reranking
 
@@ -83,6 +110,7 @@ These caps apply in `raglib/vector_store.py`, so they cover `context.py`, `searc
 - Retrieval outputs include `section_index` and `section_path` from Markdown header-aware chunking when available.
 - Retrieval outputs include `source_group`, `doc_type`, and `is_overview` after the collection is re-ingested with the current metadata schema.
 - Code retrieval outputs include line and symbol metadata after `ingest_code.py`.
+- Use `--no-hybrid` to disable BM25 sparse retrieval for comparison/debugging.
 
 ## MCP Tools
 
@@ -90,9 +118,36 @@ The MCP server exposes:
 
 - `retrieve_icebot_docs`: preferred for architecture, contracts, rules, flows, and business meaning.
 - `retrieve_icebot_code`: preferred for implementation, classes, endpoint wiring, and mapping details.
-- `retrieve_icebot_context`: lower-level tool with explicit `lane`.
+- `retrieve_icebot_context`: router-level tool with `mode=docs|code|both`; default is `docs`.
 
 Prefer docs first. Use code when the question asks where or how something is implemented.
+MCP tools accept `use_hybrid=true|false`. Keep hybrid enabled for exact keyword and code lookup unless local measurement says otherwise.
+
+## Cross-check Workflow
+
+Use docs and code together when the question asks whether implementation matches the accepted design:
+
+- business rule X has been implemented
+- endpoint Y matches the documented contract
+- entity Z follows the data modeling rule
+- a flow in docs is enforced by controllers/services/entities
+
+Recommended flow:
+
+```text
+Docs RAG -> expected rule/contract/design
+Code RAG -> implementation evidence
+Compare -> matched, missing, partial, conflicting, or unknown
+```
+
+Use `retrieve_icebot_context` with `mode=both`, or call `retrieve_icebot_docs` and `retrieve_icebot_code` separately when the comparison needs clearer source separation.
+
+Guardrails:
+
+- Do not embed secrets or local-only config.
+- Do not embed all migrations by default; migrations are noisy and should be opt-in when schema history matters.
+- Keep code `candidate_limit` conservative because code chunks are numerous and heavier to rerank.
+- Code RAG does not replace `rg`; use `rg` for exact symbol, route, call graph, and usage verification.
 
 ## Runtime Notes
 

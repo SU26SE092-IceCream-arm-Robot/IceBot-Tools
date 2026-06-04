@@ -24,7 +24,7 @@ This folder contains local RAG scripts for searching and asking over IceBot proj
 - `raglib/code_chunking.py`: source-code chunking with basic language, namespace, symbol, and line metadata.
 - `raglib/collection_manifest.py`: local collection manifest creation and validation.
 - `raglib/retrieval.py`: shared Qdrant metadata filter and reranking helper.
-- `raglib/vector_store.py`: shared Qdrant vector search and rerank orchestration.
+- `raglib/vector_store.py`: shared Qdrant dense/sparse hybrid retrieval and rerank orchestration.
 
 ## Source Boundaries
 
@@ -46,6 +46,7 @@ This folder contains local RAG scripts for searching and asking over IceBot proj
 - `IceBot-Tools/data/qdrant` stores generated Qdrant data mounted by Docker.
 - `IceBot-Tools/logs/rag` stores runtime logs such as `ingest.log`.
 - `RAG_CACHE_ROOT` controls where local model/cache files are stored.
+- `FASTEMBED_CACHE_PATH` is set automatically to `CACHE_ROOT/fastembed`; set it explicitly only when you need a custom sparse-model cache location.
 - `RAG_LOG_DIR` controls where RAG runtime logs are stored.
 - RAG logs use size-based rotation by default: 10 MB per file and 10 backups.
 - `RAG_LOG_CONSOLE=false` keeps routine INFO logs in files only; console shows WARNING+ plus command summaries.
@@ -76,6 +77,8 @@ Local environment:
 - `RAG_LOG_MAX_BYTES` and `RAG_LOG_BACKUP_COUNT` are optional. Defaults keep about 110 MB per log stream.
 - `RAG_LOG_CONSOLE` is optional. Set `true` to show INFO logs in the terminal while debugging.
 - `RAG_CHUNK_SIZE` and `RAG_CHUNK_OVERLAP` are optional. Defaults are `800` and `120`.
+- `RAG_ENABLE_HYBRID` controls Qdrant dense+sparse hybrid retrieval. Default is `true`.
+- `RAG_SPARSE_MODEL` controls the sparse model used by `fastembed`. Default is `Qdrant/bm25`.
 - `commands/context.py`, `commands/search.py`, `commands/ingest_docs.py`, `commands/ingest_code.py`, and `mcp_server.py` do not call OpenAI directly.
 
 First-time setup:
@@ -113,6 +116,7 @@ retrieve_icebot_code
 ```
 
 It does not call OpenAI and does not need `OPENAI_API_KEY`. The IDE/model using MCP is responsible for reasoning over the returned context.
+`retrieve_icebot_context` is the router-level tool and accepts `mode=docs|code|both`; it defaults to docs. The docs/code tools are shortcuts.
 
 Run from `IceBot-Tools`:
 
@@ -122,8 +126,10 @@ python .\rag\mcp_server.py
 ```
 
 The MCP server is a long-running process, so `raglib/vector_store.py` keeps the embedding model, reranker, and Qdrant client loaded and reuses them across tool calls.
+When hybrid retrieval is enabled, it also keeps the sparse BM25 model loaded.
 
 ## Operational Notes
 
 - Keep Qdrant storage, model cache, and knowledge sources separate.
 - Do not rename storage folders or change paths just because a naming question is being discussed. Apply structural changes only after an explicit decision.
+- Hybrid search requires the current named-vector schema. `v1` is the initial active collection version because no earlier collection data is being preserved.

@@ -44,8 +44,26 @@ icebot_code_knowledge_v1
 Bump `RAG_DOCS_COLLECTION_VERSION` or `RAG_CODE_COLLECTION_VERSION` when changing embedding model, embedding dimension, or chunking strategy for that lane.
 
 Ingest commands write generated manifests under `IceBot-Tools/data/rag_collections`
-with the collection version, embedding model, embedding dimension, and creation time.
+with the collection version, vector schema, embedding model, embedding dimension, sparse model, and creation time.
 The manifest is local generated state and should not be committed.
+
+## Vector Schema
+
+Collection `v1` uses Qdrant named vectors:
+
+```text
+dense  -> Qwen/Qwen3-Embedding-0.6B cosine vector
+sparse -> Qdrant/bm25 sparse vector, when RAG_ENABLE_HYBRID=true
+```
+
+Hybrid retrieval requires this named vector schema. Because `v1` has not been used as an active production collection yet, `v1` remains the initial collection version for the current schema. Re-ingest both lanes manually after this schema setup:
+
+```powershell
+python .\rag\commands\ingest_docs.py
+python .\rag\commands\ingest_code.py
+```
+
+Set `RAG_ENABLE_HYBRID=false` only when you need a named dense-only collection for debugging or dependency troubleshooting.
 
 ## Metadata Rules
 
@@ -169,3 +187,4 @@ Qwen/Qwen3-Embedding-0.6B
 ```
 
 Changing the embedding model requires a new collection version and full re-ingest because vector dimensions and embedding spaces may change.
+Changing `RAG_ENABLE_HYBRID` or `RAG_SPARSE_MODEL` also requires a new collection version and full re-ingest because the Qdrant vector schema or sparse vector space changes.

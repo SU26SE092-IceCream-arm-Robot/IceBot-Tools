@@ -87,12 +87,12 @@ def build_filter(
     return Filter(must=conditions)
 
 
-def rerank_results(reranker, query: str, results):
+def rerank_results(reranker, query: str, results, score_field: str = "vector_score"):
     if reranker is None:
-        # Set vector_score on payload for consistency even without reranking.
+        # Set the retrieval score on payload for consistency even without reranking.
         for result in results:
             result.payload = result.payload or {}
-            result.payload["vector_score"] = result.score
+            result.payload[score_field] = result.score
         return results
 
     rerank_pairs = [
@@ -103,7 +103,7 @@ def rerank_results(reranker, query: str, results):
 
     for result, rerank_score in zip(results, rerank_scores):
         result.payload = result.payload or {}
-        result.payload["vector_score"] = result.score
+        result.payload[score_field] = result.score
         result.payload["rerank_score"] = float(rerank_score)
 
     return sorted(

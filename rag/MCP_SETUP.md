@@ -83,3 +83,5 @@ retrieve_icebot_code
 ```
 
 The tools return context chunks with metadata such as source path, authority, status, retrieval scores, and code symbol/line metadata when available.
+Use `retrieve_icebot_context` with `mode=docs|code|both` when you want explicit routing in one tool. Use `retrieve_icebot_docs` and `retrieve_icebot_code` as shortcuts.
+The tools accept `use_hybrid=true|false`. Hybrid uses Qdrant dense+sparse retrieval and is useful for exact symbols, paths, endpoints, and enum names.
