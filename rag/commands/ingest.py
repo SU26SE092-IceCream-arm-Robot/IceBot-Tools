@@ -45,9 +45,11 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-EXCLUDED_SOURCE_PATHS = {
-    "Vault/Learning/AGENT_HARNESS_LEARNING_NOTES.md",
-    "Vault/Learning/RAG_LEARNING_NOTES.md",
+EXCLUDED_SOURCE_PATHS = set()
+
+EXCLUDED_SOURCE_PREFIXES = {
+    "Vault/Learning/Personal/",
+    "Vault/Learning/Tooling/",
 }
 
 BATCH_SIZE = 128
@@ -126,13 +128,23 @@ def validate_source_paths(source_configs: list[dict]) -> None:
 
 def iter_markdown_files(source_path: Path):
     if source_path.is_file() and source_path.suffix.lower() == ".md":
-        if not is_excluded_source(source_path, WORKSPACE_ROOT, EXCLUDED_SOURCE_PATHS):
+        if not is_excluded_source(
+            source_path,
+            WORKSPACE_ROOT,
+            EXCLUDED_SOURCE_PATHS,
+            EXCLUDED_SOURCE_PREFIXES,
+        ):
             yield source_path
         return
 
     if source_path.is_dir():
         for file_path in source_path.rglob("*.md"):
-            if not is_excluded_source(file_path, WORKSPACE_ROOT, EXCLUDED_SOURCE_PATHS):
+            if not is_excluded_source(
+                file_path,
+                WORKSPACE_ROOT,
+                EXCLUDED_SOURCE_PATHS,
+                EXCLUDED_SOURCE_PREFIXES,
+            ):
                 yield file_path
 
 

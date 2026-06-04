@@ -62,10 +62,10 @@ Every ingested chunk should include:
 
 Some project-related notes are intentionally not embedded because they are about operating the RAG tool itself, not IceBot product/backend knowledge.
 
-Currently excluded:
+Currently excluded by prefix:
 
-- `Vault/Learning/AGENT_HARNESS_LEARNING_NOTES.md`
-- `Vault/Learning/RAG_LEARNING_NOTES.md`
+- `Vault/Learning/Personal/`
+- `Vault/Learning/Tooling/`
 
 ## Payload Indexes
 

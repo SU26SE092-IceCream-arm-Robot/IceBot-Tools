@@ -125,9 +125,20 @@ def get_doc_type(file_path: Path, source_type: str, workspace_root: Path) -> str
     return "reference"
 
 
-def is_excluded_source(file_path: Path, workspace_root: Path, excluded_paths: set[str]) -> bool:
+def is_excluded_source(
+    file_path: Path,
+    workspace_root: Path,
+    excluded_paths: set[str],
+    excluded_prefixes: set[str] | None = None,
+) -> bool:
     relative_path = build_source_path(file_path, workspace_root)
-    return relative_path in excluded_paths
+    if relative_path in excluded_paths:
+        return True
+
+    if excluded_prefixes:
+        return any(relative_path.startswith(prefix) for prefix in excluded_prefixes)
+
+    return False
 
 
 def build_metadata(source_config: dict, file_path: Path, workspace_root: Path) -> dict:
