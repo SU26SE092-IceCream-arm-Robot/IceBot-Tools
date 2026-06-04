@@ -14,6 +14,12 @@ setup_cache_env()
 def parse_args():
     parser = argparse.ArgumentParser(description="Retrieve IceBot project context without calling an LLM.")
     parser.add_argument("query", nargs="?", help="Context query. If omitted, input prompt is shown.")
+    parser.add_argument(
+        "--lane",
+        choices=["docs", "code"],
+        default="docs",
+        help="Collection lane to retrieve from.",
+    )
     parser.add_argument("--limit", type=int, default=5, help="Maximum number of context chunks.")
     parser.add_argument(
         "--candidate-limit",
@@ -35,6 +41,11 @@ def parse_args():
         "--status",
         action="append",
         help="Filter by status. Can be repeated, e.g. --status current --status decision-note.",
+    )
+    parser.add_argument(
+        "--authority",
+        action="append",
+        help="Filter by authority. Can be repeated, e.g. --authority implementation.",
     )
     parser.add_argument(
         "--source-type",
@@ -85,6 +96,12 @@ def result_to_dict(result):
         "chunk_index": payload.get("chunk_index"),
         "section_index": payload.get("section_index"),
         "section_path": payload.get("section_path"),
+        "language": payload.get("language"),
+        "namespace": payload.get("namespace"),
+        "symbol_kind": payload.get("symbol_kind"),
+        "symbol_name": payload.get("symbol_name"),
+        "start_line": payload.get("start_line"),
+        "end_line": payload.get("end_line"),
         "vector_score": payload.get("vector_score", result.score),
         "rerank_score": payload.get("rerank_score"),
         "text": payload.get("text") or "",
@@ -113,6 +130,10 @@ def print_markdown_context(query: str, context_items: list[dict]) -> None:
         print(f"- Chunk: `{item['chunk_index']}`")
         print(f"- Section index: `{item['section_index']}`")
         print(f"- Section path: `{item['section_path']}`")
+        print(f"- Language: `{item['language']}`")
+        print(f"- Namespace: `{item['namespace']}`")
+        print(f"- Symbol: `{item['symbol_kind']} {item['symbol_name']}`")
+        print(f"- Lines: `{item['start_line']}-{item['end_line']}`")
         print(f"- Vector score: `{item['vector_score']}`")
         print(f"- Rerank score: `{item['rerank_score']}`")
         print()
@@ -127,7 +148,9 @@ def main() -> None:
 
     results = retrieve_context(
         query,
+        lane=args.lane,
         include_vault=args.include_vault,
+        authorities=args.authority,
         statuses=args.status,
         source_types=args.source_type,
         source_groups=args.source_group,

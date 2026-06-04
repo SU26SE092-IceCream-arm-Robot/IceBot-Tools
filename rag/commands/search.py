@@ -13,6 +13,12 @@ setup_cache_env()
 def parse_args():
     parser = argparse.ArgumentParser(description="Search IceBot project knowledge in Qdrant.")
     parser.add_argument("query", nargs="?", help="Search question. If omitted, input prompt is shown.")
+    parser.add_argument(
+        "--lane",
+        choices=["docs", "code"],
+        default="docs",
+        help="Collection lane to search.",
+    )
     parser.add_argument("--limit", type=int, default=5, help="Maximum number of results.")
     parser.add_argument(
         "--candidate-limit",
@@ -34,6 +40,11 @@ def parse_args():
         "--status",
         action="append",
         help="Filter by status. Can be repeated, e.g. --status current --status decision-note.",
+    )
+    parser.add_argument(
+        "--authority",
+        action="append",
+        help="Filter by authority. Can be repeated, e.g. --authority implementation.",
     )
     parser.add_argument(
         "--source-type",
@@ -70,7 +81,9 @@ def main() -> None:
 
     results = retrieve_context(
         query,
+        lane=args.lane,
         include_vault=args.include_vault,
+        authorities=args.authority,
         statuses=args.status,
         source_types=args.source_type,
         source_groups=args.source_group,
@@ -99,6 +112,10 @@ def main() -> None:
         print("Overview:", payload.get("is_overview"))
         print("Section index:", payload.get("section_index"))
         print("Section path:", payload.get("section_path"))
+        print("Language:", payload.get("language"))
+        print("Namespace:", payload.get("namespace"))
+        print("Symbol:", payload.get("symbol_kind"), payload.get("symbol_name"))
+        print("Lines:", payload.get("start_line"), "-", payload.get("end_line"))
         print("-" * 80)
         print(payload.get("text"))
 

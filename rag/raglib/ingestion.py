@@ -1,37 +1,6 @@
 import json
-import sys
+from abc import ABC, abstractmethod
 from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parents[1]))
-
-from raglib.config import (
-    COLLECTION_BASE_NAME,
-    COLLECTION_MANIFEST_PATH,
-    COLLECTION_NAME,
-    COLLECTION_VERSION,
-    DEFAULT_QDRANT_URL,
-    EMBEDDING_MODEL,
-    SOURCES_EXAMPLE_PATH,
-    SOURCES_LOCAL_PATH,
-    TOOLS_DIR,
-    WORKSPACE_ROOT,
-    setup_cache_env,
-)
-from raglib.collection_manifest import (
-    build_collection_manifest,
-    read_collection_manifest,
-    validate_collection_manifest,
-    write_collection_manifest,
-)
-from raglib.logging import configure_logger
-from raglib.markdown_chunking import MarkdownChunker
-from raglib.source_metadata import (
-    build_metadata,
-    build_point_id,
-    is_excluded_source,
-)
-
-setup_cache_env()
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
@@ -45,31 +14,31 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-EXCLUDED_SOURCE_PATHS = set()
+from raglib.collection_manifest import (
+    build_collection_manifest,
+    read_collection_manifest,
+    validate_collection_manifest,
+    write_collection_manifest,
+)
+from raglib.config import DEFAULT_QDRANT_URL, EMBEDDING_MODEL, TOOLS_DIR, WORKSPACE_ROOT
+from raglib.source_metadata import build_metadata
 
-EXCLUDED_SOURCE_PREFIXES = {
-    "Vault/Learning/Personal/",
-    "Vault/Learning/Tooling/",
-}
 
 BATCH_SIZE = 128
-LOGGER = configure_logger("icebot.rag.ingest", "ingest.log")
 
 
-# ---------------------------------------------------------------------------
-# Source configuration and pure helpers
-# ---------------------------------------------------------------------------
-
-def load_source_configs() -> list[dict]:
-    source_config_path = SOURCES_LOCAL_PATH if SOURCES_LOCAL_PATH.exists() else SOURCES_EXAMPLE_PATH
+def load_source_configs(collection_lane: dict, logger, missing_source_message: str) -> list[dict]:
+    sources_local_path = collection_lane["sources_local_path"]
+    sources_example_path = collection_lane["sources_example_path"]
+    source_config_path = sources_local_path if sources_local_path.exists() else sources_example_path
     source_config_message = f"Using source config: {source_config_path}"
-    LOGGER.info(source_config_message)
+    logger.info(source_config_message)
     print(source_config_message)
 
     if not source_config_path.exists():
         raise SystemExit(
             f"Missing source config: {source_config_path}\n"
-            "Create rag/sources.local.json or restore rag/sources.example.json."
+            f"{missing_source_message}"
         )
 
     try:
@@ -126,104 +95,80 @@ def validate_source_paths(source_configs: list[dict]) -> None:
     raise SystemExit(f"Missing required RAG source(s):\n{formatted_paths}")
 
 
-def iter_markdown_files(source_path: Path):
-    if source_path.is_file() and source_path.suffix.lower() == ".md":
-        if not is_excluded_source(
-            source_path,
-            WORKSPACE_ROOT,
-            EXCLUDED_SOURCE_PATHS,
-            EXCLUDED_SOURCE_PREFIXES,
-        ):
-            yield source_path
-        return
+class BaseIngester(ABC):
+    collection_lane_name: str
+    missing_source_message: str
+    missing_manifest_message: str
+    log_label: str
 
-    if source_path.is_dir():
-        for file_path in source_path.rglob("*.md"):
-            if not is_excluded_source(
-                file_path,
-                WORKSPACE_ROOT,
-                EXCLUDED_SOURCE_PATHS,
-                EXCLUDED_SOURCE_PREFIXES,
-            ):
-                yield file_path
-
-
-# ---------------------------------------------------------------------------
-# Ingester: groups all stateful operations so no implicit global state
-# ---------------------------------------------------------------------------
-
-class Ingester:
-    def __init__(self) -> None:
+    def __init__(self, collection_lane: dict, logger) -> None:
         from sentence_transformers import SentenceTransformer
 
+        self.collection_lane = collection_lane
+        self.logger = logger
         self.model = SentenceTransformer(EMBEDDING_MODEL, trust_remote_code=True)
         self.client = QdrantClient(url=DEFAULT_QDRANT_URL)
         self.embedding_dimension = len(self.model.encode("dimension probe"))
-
-        self.chunker = MarkdownChunker()
         self._points: list[PointStruct] = []
 
-    # ------------------------------------------------------------------
-    # Collection management
-    # ------------------------------------------------------------------
+    @property
+    def collection_name(self) -> str:
+        return self.collection_lane["name"]
+
+    def load_source_configs(self) -> list[dict]:
+        return load_source_configs(
+            self.collection_lane,
+            self.logger,
+            self.missing_source_message,
+        )
 
     def build_collection_manifest(self) -> dict:
         return build_collection_manifest(
-            collection_base_name=COLLECTION_BASE_NAME,
-            collection_name=COLLECTION_NAME,
-            collection_version=COLLECTION_VERSION,
+            collection_lane=self.collection_lane_name,
+            collection_base_name=self.collection_lane["base_name"],
+            collection_name=self.collection_lane["name"],
+            collection_version=self.collection_lane["version"],
             embedding_model=EMBEDDING_MODEL,
             embedding_dimension=self.embedding_dimension,
         )
 
     def ensure_collection(self) -> None:
-        if not self.client.collection_exists(collection_name=COLLECTION_NAME):
-            LOGGER.info("Creating Qdrant collection: %s", COLLECTION_NAME)
+        manifest_path = self.collection_lane["manifest_path"]
+
+        if not self.client.collection_exists(collection_name=self.collection_name):
+            self.logger.info("Creating Qdrant collection: %s", self.collection_name)
             self.client.create_collection(
-                collection_name=COLLECTION_NAME,
+                collection_name=self.collection_name,
                 vectors_config=VectorParams(
                     size=self.embedding_dimension,
                     distance=Distance.COSINE,
                 ),
             )
-            write_collection_manifest(COLLECTION_MANIFEST_PATH, self.build_collection_manifest())
-            LOGGER.info("Wrote collection manifest: %s", COLLECTION_MANIFEST_PATH)
+            write_collection_manifest(manifest_path, self.build_collection_manifest())
+            self.logger.info("Wrote collection manifest: %s", manifest_path)
             return
 
-        manifest = read_collection_manifest(COLLECTION_MANIFEST_PATH)
+        manifest = read_collection_manifest(manifest_path)
 
         if manifest is None:
             raise SystemExit(
-                f"Missing collection manifest: {COLLECTION_MANIFEST_PATH}\n"
+                f"Missing collection manifest: {manifest_path}\n"
                 "Do not ingest into an existing collection without metadata. "
-                "Create a new collection version or recreate the collection with ingest.py."
+                f"{self.missing_manifest_message}"
             )
 
         validate_collection_manifest(manifest, self.build_collection_manifest())
-        LOGGER.info("Validated collection manifest: %s", COLLECTION_MANIFEST_PATH)
+        self.logger.info("Validated collection manifest: %s", manifest_path)
 
     def ensure_payload_indexes(self) -> None:
-        indexed_fields = {
-            "authority": PayloadSchemaType.KEYWORD,
-            "status": PayloadSchemaType.KEYWORD,
-            "source_type": PayloadSchemaType.KEYWORD,
-            "source_group": PayloadSchemaType.KEYWORD,
-            "doc_type": PayloadSchemaType.KEYWORD,
-            "source": PayloadSchemaType.KEYWORD,
-            "file_id": PayloadSchemaType.KEYWORD,
-            "file_hash": PayloadSchemaType.KEYWORD,
-            "is_overview": PayloadSchemaType.BOOL,
-            "source_path": PayloadSchemaType.TEXT,
-        }
-
-        for field_name, field_schema in indexed_fields.items():
+        for field_name, field_schema in self.payload_indexes().items():
             try:
                 self.client.create_payload_index(
-                    collection_name=COLLECTION_NAME,
+                    collection_name=self.collection_name,
                     field_name=field_name,
                     field_schema=field_schema,
                 )
-                LOGGER.info("Ensured payload index: %s", field_name)
+                self.logger.info("Ensured payload index: %s", field_name)
             except Exception as ex:
                 message = str(ex).lower()
 
@@ -232,9 +177,22 @@ class Ingester:
 
                 raise
 
+    def payload_indexes(self) -> dict:
+        return {
+            "authority": PayloadSchemaType.KEYWORD,
+            "status": PayloadSchemaType.KEYWORD,
+            "source_type": PayloadSchemaType.KEYWORD,
+            "source_group": PayloadSchemaType.KEYWORD,
+            "doc_type": PayloadSchemaType.KEYWORD,
+            "source": PayloadSchemaType.KEYWORD,
+            "file_id": PayloadSchemaType.KEYWORD,
+            "file_hash": PayloadSchemaType.KEYWORD,
+            "source_path": PayloadSchemaType.TEXT,
+        }
+
     def delete_existing_file_points(self, file_id: str) -> None:
         self.client.delete(
-            collection_name=COLLECTION_NAME,
+            collection_name=self.collection_name,
             points_selector=Filter(
                 must=[
                     FieldCondition(
@@ -247,7 +205,7 @@ class Ingester:
 
     def is_file_unchanged(self, file_id: str, file_hash: str) -> bool:
         existing_points, _ = self.client.scroll(
-            collection_name=COLLECTION_NAME,
+            collection_name=self.collection_name,
             scroll_filter=Filter(
                 must=[
                     FieldCondition(
@@ -272,7 +230,7 @@ class Ingester:
 
         while True:
             records, offset = self.client.scroll(
-                collection_name=COLLECTION_NAME,
+                collection_name=self.collection_name,
                 limit=256,
                 offset=offset,
                 with_payload=["file_id"],
@@ -299,7 +257,7 @@ class Ingester:
             return 0
 
         self.client.delete(
-            collection_name=COLLECTION_NAME,
+            collection_name=self.collection_name,
             points_selector=Filter(
                 must=[
                     FieldCondition(
@@ -318,45 +276,38 @@ class Ingester:
 
         flushed_count = len(self._points)
         self.client.upsert(
-            collection_name=COLLECTION_NAME,
+            collection_name=self.collection_name,
             points=self._points,
         )
         self._points.clear()
         return flushed_count
 
     def build_file_points(self, metadata: dict, file_path: Path) -> tuple[list[PointStruct], int]:
-        text = file_path.read_text(encoding="utf-8")
-        chunks = self.chunker.split(text)
-        skipped_empty_chunks = self.chunker.last_skipped_empty_chunks
+        chunks, skipped_empty_chunks = self.build_chunks(file_path)
         file_points = []
 
         for index, chunk in enumerate(chunks):
             chunk_text = chunk["text"]
             vector = self.model.encode(chunk_text).tolist()
+            payload = {
+                **metadata,
+                "chunk_index": index,
+                **self.build_chunk_payload(chunk, file_path),
+                "text": chunk_text,
+            }
 
             file_points.append(
                 PointStruct(
-                    id=build_point_id(metadata["source_path"], index, chunk_text),
+                    id=self.build_point_id(metadata["source_path"], index, chunk_text),
                     vector=vector,
-                    payload={
-                        **metadata,
-                        "chunk_index": index,
-                        "section_index": chunk["section_index"],
-                        "section_path": chunk["section_path"],
-                        "is_overview": chunk["section_index"] == 0,
-                        "text": chunk_text,
-                    },
+                    payload=payload,
                 )
             )
 
         return file_points, skipped_empty_chunks
 
-    # ------------------------------------------------------------------
-    # Main ingest loop
-    # ------------------------------------------------------------------
-
     def run(self, source_configs: list[dict]) -> None:
-        LOGGER.info("Starting ingest into collection: %s", COLLECTION_NAME)
+        self.logger.info("Starting %s ingest into collection: %s", self.log_label, self.collection_name)
         self.ensure_collection()
         self.ensure_payload_indexes()
 
@@ -370,15 +321,15 @@ class Ingester:
             source_path = source_config["path"]
 
             if not source_path.exists():
-                LOGGER.info("Skipped optional missing source: %s", source_path)
+                self.logger.info("Skipped optional missing source: %s", source_path)
                 continue
 
-            for file_path in iter_markdown_files(source_path):
+            for file_path in self.iter_files(source_path):
                 metadata = build_metadata(source_config, file_path, WORKSPACE_ROOT)
                 seen_file_ids.add(metadata["file_id"])
 
                 if self.is_file_unchanged(metadata["file_id"], metadata["file_hash"]):
-                    LOGGER.info("Skipped unchanged file: %s", metadata["source_path"])
+                    self.logger.info("Skipped unchanged file: %s", metadata["source_path"])
                     skipped_files += 1
                     continue
 
@@ -389,7 +340,7 @@ class Ingester:
                 self._points.extend(file_points)
                 indexed_chunks += len(file_points)
                 indexed_files += 1
-                LOGGER.info(
+                self.logger.info(
                     "Staged changed file: %s chunks=%s skipped_empty_chunks=%s",
                     metadata["source_path"],
                     len(file_points),
@@ -412,15 +363,21 @@ class Ingester:
             f"skipped {skipped_empty_chunks} empty chunks; "
             f"removed {orphaned_files} orphaned files"
         )
-        LOGGER.info(summary)
+        self.logger.info(summary)
         print(summary)
 
+    @abstractmethod
+    def iter_files(self, source_path: Path):
+        pass
 
-def main() -> None:
-    source_configs = load_source_configs()
-    validate_source_paths(source_configs)
-    Ingester().run(source_configs)
+    @abstractmethod
+    def build_chunks(self, file_path: Path) -> tuple[list[dict], int]:
+        pass
 
+    @abstractmethod
+    def build_chunk_payload(self, chunk: dict, file_path: Path) -> dict:
+        pass
 
-if __name__ == "__main__":
-    main()
+    @abstractmethod
+    def build_point_id(self, source_path: str, chunk_index: int, chunk_text: str) -> str:
+        pass

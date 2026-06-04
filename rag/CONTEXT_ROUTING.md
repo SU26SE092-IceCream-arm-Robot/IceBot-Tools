@@ -29,6 +29,13 @@ Use lazy retrieval:
 4. Read backend `docs/RAG_CONTEXT_MAP.md` only when the right document family is unclear.
 5. Enable reranking selectively for difficult queries, keeping MCP candidate limits low on memory-constrained machines.
 
+Use lane routing:
+
+- `docs` lane first for architecture, business rules, API surface, contracts, flows, and accepted direction.
+- `code` lane for implementation details, endpoint wiring, class/interface lookup, EF mapping, and configuration.
+- Use both lanes only when checking whether implementation matches the accepted design.
+- Do not combine docs and code into one default collection. Source code can dominate top-k and hide business explanations from docs.
+
 Good RAG sources:
 
 - architecture docs

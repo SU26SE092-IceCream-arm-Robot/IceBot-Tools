@@ -9,10 +9,18 @@ def build_filter(
     doc_types: list[str] | None = None,
     path_contains: list[str] | None = None,
     include_overview: bool = True,
+    authorities: list[str] | None = None,
 ) -> Filter:
     conditions = []
 
-    if include_vault:
+    if authorities:
+        conditions.append(
+            FieldCondition(
+                key="authority",
+                match=MatchAny(any=authorities),
+            )
+        )
+    elif include_vault:
         conditions.append(
             FieldCondition(
                 key="authority",

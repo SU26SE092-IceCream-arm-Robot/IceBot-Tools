@@ -19,6 +19,12 @@ setup_cache_env()
 def parse_args():
     parser = argparse.ArgumentParser(description="Ask questions over IceBot project knowledge.")
     parser.add_argument("question", nargs="?", help="Question. If omitted, input prompt is shown.")
+    parser.add_argument(
+        "--lane",
+        choices=["docs", "code"],
+        default="docs",
+        help="Collection lane to retrieve from.",
+    )
     parser.add_argument("--limit", type=int, default=5, help="Maximum number of retrieved chunks.")
     parser.add_argument(
         "--candidate-limit",
@@ -40,6 +46,11 @@ def parse_args():
         "--status",
         action="append",
         help="Filter by status. Can be repeated, e.g. --status current --status decision-note.",
+    )
+    parser.add_argument(
+        "--authority",
+        action="append",
+        help="Filter by authority. Can be repeated, e.g. --authority implementation.",
     )
     parser.add_argument(
         "--source-type",
@@ -93,6 +104,12 @@ def format_context(results) -> str:
                     f"is_overview: {payload.get('is_overview')}",
                     f"section_index: {payload.get('section_index')}",
                     f"section_path: {payload.get('section_path')}",
+                    f"language: {payload.get('language')}",
+                    f"namespace: {payload.get('namespace')}",
+                    f"symbol_kind: {payload.get('symbol_kind')}",
+                    f"symbol_name: {payload.get('symbol_name')}",
+                    f"start_line: {payload.get('start_line')}",
+                    f"end_line: {payload.get('end_line')}",
                     f"vector_score: {payload.get('vector_score', result.score)}",
                     f"rerank_score: {payload.get('rerank_score')}",
                     "text:",
@@ -117,7 +134,9 @@ def main() -> None:
 
     results = retrieve_context(
         question,
+        lane=args.lane,
         include_vault=args.include_vault,
+        authorities=args.authority,
         statuses=args.status,
         source_types=args.source_type,
         source_groups=args.source_group,

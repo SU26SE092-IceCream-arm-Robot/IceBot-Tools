@@ -105,9 +105,13 @@ pip install -r requirements.txt
 - `install_tools_dependencies`
   - Install dependencies from `IceBot-Tools/requirements.txt`.
 
-- `ingest_rag`
-  - Run `IceBot-Tools/rag/commands/ingest.py`.
+- `ingest_docs_rag`
+  - Run `IceBot-Tools/rag/commands/ingest_docs.py`.
   - Should mention that ingest updates chunks per source file and does not recreate the collection.
+
+- `ingest_code_rag`
+  - Run `IceBot-Tools/rag/commands/ingest_code.py`.
+  - Should mention that code and docs use separate Qdrant collections.
 
 - `context_rag`
   - Run `IceBot-Tools/rag/commands/context.py` for Codex IDE/CLI context without calling OpenAI directly.
@@ -124,7 +128,8 @@ pip install -r requirements.txt
 
 - `check_rag_scripts`
   - Run Python syntax checks for RAG scripts:
-    - `python -m py_compile IceBot-Tools/rag/commands/ingest.py`
+    - `python -m py_compile IceBot-Tools/rag/commands/ingest_docs.py`
+    - `python -m py_compile IceBot-Tools/rag/commands/ingest_code.py`
     - `python -m py_compile IceBot-Tools/rag/commands/context.py`
     - `python -m py_compile IceBot-Tools/rag/commands/search.py`
     - `python -m py_compile IceBot-Tools/rag/commands/ask.py`
@@ -132,7 +137,7 @@ pip install -r requirements.txt
 
 ## Naming Rules
 
-- Use verb-first names: `start_qdrant`, `stop_qdrant`, `ingest_rag`.
+- Use verb-first names: `start_qdrant`, `stop_qdrant`, `ingest_docs_rag`, `ingest_code_rag`.
 - Include the target system when the script touches a service or data store.
 - Add `reset`, `delete`, or `clear` in the name for destructive scripts.
 - Prefer PowerShell scripts on Windows if the command needs environment setup or confirmation logic.

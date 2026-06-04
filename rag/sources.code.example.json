@@ -1,0 +1,9 @@
+[
+  {
+    "path": "../IceBot-Backend/src",
+    "source_type": "backend-code",
+    "authority": "implementation",
+    "status": "current",
+    "required": false
+  }
+]

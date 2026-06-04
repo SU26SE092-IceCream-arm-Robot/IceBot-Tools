@@ -11,7 +11,8 @@ This folder contains local RAG scripts for searching and asking over IceBot proj
 
 ## Files
 
-- `commands/ingest.py`: reads source docs and incrementally writes chunks into Qdrant.
+- `commands/ingest_docs.py`: reads accepted docs and incrementally writes chunks into the docs Qdrant collection.
+- `commands/ingest_code.py`: reads backend source code and incrementally writes chunks into the code Qdrant collection.
 - `commands/context.py`: retrieves context without calling an LLM, intended for Codex IDE/CLI use.
 - `commands/search.py`: retrieves and prints chunks for inspection.
 - `commands/ask.py`: retrieves chunks and asks OpenAI to answer from that context.
@@ -20,14 +21,17 @@ This folder contains local RAG scripts for searching and asking over IceBot proj
 - `raglib/logging.py`: shared console and file logging setup for RAG commands.
 - `raglib/source_metadata.py`: source path normalization, file hash, point id, and metadata helpers.
 - `raglib/markdown_chunking.py`: Markdown header-aware chunking before recursive text splitting.
+- `raglib/code_chunking.py`: source-code chunking with basic language, namespace, symbol, and line metadata.
 - `raglib/collection_manifest.py`: local collection manifest creation and validation.
 - `raglib/retrieval.py`: shared Qdrant metadata filter and reranking helper.
 - `raglib/vector_store.py`: shared Qdrant vector search and rerank orchestration.
 
 ## Source Boundaries
 
-- `rag/sources.example.json` defines the default example source list.
-- `rag/sources.local.json` is an ignored per-machine override for local paths and source availability.
+- `rag/sources.docs.example.json` defines the default docs source list.
+- `rag/sources.docs.local.json` is an ignored per-machine override for docs paths and source availability.
+- `rag/sources.code.example.json` defines the default code source list.
+- `rag/sources.code.local.json` is an ignored per-machine override for code paths and source availability.
 - Missing optional sources are skipped during ingest. Use this for folders such as `Docs` or `Vault` that may not exist on every machine.
 - Missing required sources abort ingest before cleanup.
 - `IceBot-Backend` is implementation truth for backend code and backend docs when available.
@@ -64,14 +68,15 @@ Local environment:
 
 - `IceBot-Tools/rag/.env` stores local-only values and is ignored by git.
 - `IceBot-Tools/rag/.env.example` is the safe template.
-- `IceBot-Tools/rag/sources.local.json` stores local source overrides and is ignored by git.
+- `IceBot-Tools/rag/sources.docs.local.json` stores docs source overrides and is ignored by git.
+- `IceBot-Tools/rag/sources.code.local.json` stores code source overrides and is ignored by git.
 - `OPENAI_API_KEY` is required only for `commands/ask.py`.
 - `RAG_CACHE_ROOT` is optional. If unset, model/cache files use the user home cache folder: `~/.cache/icebot-rag`.
 - `RAG_LOG_DIR` is optional. If unset, logs use `IceBot-Tools/logs/rag`.
 - `RAG_LOG_MAX_BYTES` and `RAG_LOG_BACKUP_COUNT` are optional. Defaults keep about 110 MB per log stream.
 - `RAG_LOG_CONSOLE` is optional. Set `true` to show INFO logs in the terminal while debugging.
 - `RAG_CHUNK_SIZE` and `RAG_CHUNK_OVERLAP` are optional. Defaults are `800` and `120`.
-- `commands/context.py`, `commands/search.py`, `commands/ingest.py`, and `mcp_server.py` do not call OpenAI directly.
+- `commands/context.py`, `commands/search.py`, `commands/ingest_docs.py`, `commands/ingest_code.py`, and `mcp_server.py` do not call OpenAI directly.
 
 First-time setup:
 
@@ -79,10 +84,13 @@ First-time setup:
 docker compose -f docker\docker-compose.yml up -d
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-Copy-Item .\rag\sources.example.json .\rag\sources.local.json
-# Edit .\rag\sources.local.json if your machine does not have every example source.
-python .\rag\commands\ingest.py
+Copy-Item .\rag\sources.docs.example.json .\rag\sources.docs.local.json
+Copy-Item .\rag\sources.code.example.json .\rag\sources.code.local.json
+# Edit local source files if your machine does not have every example source.
+python .\rag\commands\ingest_docs.py
+python .\rag\commands\ingest_code.py
 python .\rag\commands\context.py "current payment flow"
+python .\rag\commands\context.py --lane code "PaymentSessionsController"
 python .\rag\commands\ask.py
 ```
 
@@ -100,6 +108,8 @@ python .\rag\commands\context.py "current payment flow"
 
 ```text
 retrieve_icebot_context
+retrieve_icebot_docs
+retrieve_icebot_code
 ```
 
 It does not call OpenAI and does not need `OPENAI_API_KEY`. The IDE/model using MCP is responsible for reasoning over the returned context.

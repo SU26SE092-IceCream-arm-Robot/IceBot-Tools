@@ -24,7 +24,8 @@ pip install -r requirements.txt
 3. Ingest project knowledge:
 
 ```powershell
-python .\rag\commands\ingest.py
+python .\rag\commands\ingest_docs.py
+python .\rag\commands\ingest_code.py
 ```
 
 4. Register the MCP server with Codex:
@@ -77,6 +78,8 @@ Use icebot-rag to retrieve context about the current payment flow, then review t
 
 ```text
 retrieve_icebot_context
+retrieve_icebot_docs
+retrieve_icebot_code
 ```
 
-The tool returns context chunks with metadata such as source path, authority, status, and retrieval scores.
+The tools return context chunks with metadata such as source path, authority, status, retrieval scores, and code symbol/line metadata when available.

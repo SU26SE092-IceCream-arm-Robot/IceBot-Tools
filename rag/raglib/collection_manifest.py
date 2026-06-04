@@ -5,6 +5,7 @@ from pathlib import Path
 
 def build_collection_manifest(
     *,
+    collection_lane: str,
     collection_base_name: str,
     collection_name: str,
     collection_version: str,
@@ -12,6 +13,7 @@ def build_collection_manifest(
     embedding_dimension: int,
 ) -> dict:
     return {
+        "collection_lane": collection_lane,
         "collection_base_name": collection_base_name,
         "collection_name": collection_name,
         "collection_version": collection_version,
@@ -41,7 +43,7 @@ def write_collection_manifest(manifest_path: Path, manifest: dict) -> None:
 def validate_collection_manifest(manifest: dict, expected: dict) -> None:
     mismatches = []
 
-    for key in ["collection_name", "collection_version", "embedding_model", "embedding_dimension"]:
+    for key in ["collection_lane", "collection_name", "collection_version", "embedding_model", "embedding_dimension"]:
         if manifest.get(key) != expected[key]:
             mismatches.append(f"{key}: manifest={manifest.get(key)!r}, current={expected[key]!r}")
 

@@ -2,14 +2,24 @@
 
 This file documents how IceBot project knowledge is ingested into Qdrant.
 
+IceBot uses separate collections for docs and code:
+
+- docs knowledge: architecture, contracts, rules, flows, accepted docs
+- code knowledge: source code, classes, methods, mappings, configuration
+
 ## Source Configuration
 
-`commands/ingest.py` loads source folders/files from:
+`commands/ingest_docs.py` loads docs source folders/files from:
 
-1. `rag/sources.local.json` when present
-2. `rag/sources.example.json` otherwise
+1. `rag/sources.docs.local.json` when present
+2. `rag/sources.docs.example.json` otherwise
 
-`sources.local.json` is ignored by git and should be used for per-machine paths. Relative paths are resolved from the `IceBot-Tools` root.
+`commands/ingest_code.py` loads code source folders/files from:
+
+1. `rag/sources.code.local.json` when present
+2. `rag/sources.code.example.json` otherwise
+
+Local source config files are ignored by git and should be used for per-machine paths. Relative paths are resolved from the `IceBot-Tools` root.
 
 Each source entry contains:
 
@@ -23,17 +33,17 @@ Optional missing sources are skipped. Missing required sources abort ingest befo
 
 ## Collection Versioning
 
-The active Qdrant collection is versioned:
+The active Qdrant collections are versioned:
 
 ```text
-icebot_project_knowledge_v1
+icebot_docs_knowledge_v1
+icebot_code_knowledge_v1
 ```
 
-`icebot_project_knowledge` is the logical base name. Bump `RAG_COLLECTION_VERSION`
-when changing embedding model or embedding dimension, then re-ingest the source docs
-into the new collection version.
+`icebot_docs_knowledge` and `icebot_code_knowledge` are logical base names.
+Bump `RAG_DOCS_COLLECTION_VERSION` or `RAG_CODE_COLLECTION_VERSION` when changing embedding model, embedding dimension, or chunking strategy for that lane.
 
-`commands/ingest.py` writes a generated manifest under `IceBot-Tools/data/rag_collections`
+Ingest commands write generated manifests under `IceBot-Tools/data/rag_collections`
 with the collection version, embedding model, embedding dimension, and creation time.
 The manifest is local generated state and should not be committed.
 
@@ -58,6 +68,15 @@ Every ingested chunk should include:
 - `section_path`
 - `text`
 
+Code chunks may also include:
+
+- `language`
+- `namespace`
+- `symbol_kind`
+- `symbol_name`
+- `start_line`
+- `end_line`
+
 ## Excluded Sources
 
 Some project-related notes are intentionally not embedded because they are about operating the RAG tool itself, not IceBot product/backend knowledge.
@@ -69,7 +88,7 @@ Currently excluded by prefix:
 
 ## Payload Indexes
 
-`commands/ingest.py` creates Qdrant payload indexes for frequently filtered fields:
+Ingest commands create Qdrant payload indexes for frequently filtered fields:
 
 | Field | Schema | Reason |
 | --- | --- | --- |
@@ -78,13 +97,17 @@ Currently excluded by prefix:
 | `source_type` | keyword | backend-doc/project-doc/vault filtering |
 | `source_group` | keyword | broad docs/vault/code/logs filtering |
 | `doc_type` | keyword | api/flow/contract/architecture/domain filtering |
+| `language` | keyword | code language filtering |
+| `namespace` | keyword | C# namespace filtering |
+| `symbol_kind` | keyword | class/interface/method-style filtering |
+| `symbol_name` | keyword | symbol lookup and future Graph-RAG preparation |
 | `source` | keyword | filename filtering if needed |
 | `file_id` | keyword | incremental re-index and orphan cleanup |
 | `file_hash` | keyword | unchanged-file skip checks |
 | `is_overview` | bool | allow specific retrieval to skip generic overview chunks |
 | `source_path` | text | `--path-contains` matching |
 
-## Markdown Chunking
+## Docs Chunking
 
 Chunking logic lives in `raglib/markdown_chunking.py`.
 
@@ -93,7 +116,19 @@ Markdown files are split in two stages:
 1. split by Markdown headers (`#` to `####`) to preserve section context
 2. split long sections into smaller chunks with recursive character splitting
 
-Empty or Markdown-noise-only chunks are skipped before embedding. `commands/ingest.py` prints the skipped empty chunk count in the ingest summary for debugging.
+Empty or Markdown-noise-only chunks are skipped before embedding. `commands/ingest_docs.py` prints the skipped empty chunk count in the ingest summary for debugging.
+
+## Code Chunking
+
+Chunking logic lives in `raglib/code_chunking.py`.
+
+The current code chunker is intentionally simple:
+
+- includes `.cs`, `.csproj`, `.json`, `.props`, and `.targets`
+- excludes noisy folders such as `bin`, `obj`, `.git`, `.vs`, `node_modules`, and `Migrations`
+- captures rough C# metadata such as namespace, symbol name, symbol kind, and line range
+
+This prepares for Code RAG and future Graph-RAG without forcing a complex parser upfront.
 
 Chunk size and overlap are configurable through:
 
@@ -109,12 +144,13 @@ Defaults are `800` and `120`, preserving the current behavior. Changing these va
 - After doc changes, normally provide this manual command instead:
 
 ```powershell
-python .\rag\commands\ingest.py
+python .\rag\commands\ingest_docs.py
+python .\rag\commands\ingest_code.py
 ```
 
-- `commands/ingest.py` creates the collection when missing and updates indexed chunks per source file.
+- Ingest commands create the collection when missing and update indexed chunks per source file.
 - Collection version metadata is written and validated through `raglib/collection_manifest.py`.
-- `commands/ingest.py` skips files whose current `file_hash` already exists in Qdrant.
+- Ingest commands skip files whose current `file_hash` already exists in Qdrant.
 - Vectors are upserted in batches to avoid keeping the entire ingest result in memory.
 - Changed files are read, chunked, and embedded successfully before old chunks for that file are deleted.
 - Existing chunks for a source file are deleted only after replacement points are staged, preventing stale chunks when content shrinks or changes.
@@ -126,7 +162,7 @@ python .\rag\commands\ingest.py
 
 ## Script Alignment
 
-`commands/ingest.py`, `commands/context.py`, `commands/search.py`, and `commands/ask.py` must use the same embedding model:
+`commands/ingest_docs.py`, `commands/ingest_code.py`, `commands/context.py`, `commands/search.py`, and `commands/ask.py` must use the same embedding model:
 
 ```text
 Qwen/Qwen3-Embedding-0.6B

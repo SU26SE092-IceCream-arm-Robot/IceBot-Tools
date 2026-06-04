@@ -4,9 +4,15 @@ This file documents search, context retrieval, reranking, and safety limits.
 
 ## Default Authority
 
-Default search/ask behavior should use official sources only:
+Default docs search/ask behavior should use official sources only:
 
 - `authority = official`
+
+Default code search uses implementation sources:
+
+- `authority = implementation`
+- `source_group = code`
+- `doc_type = source-code`
 
 Vault should be opt-in:
 
@@ -24,6 +30,8 @@ python .\rag\commands\search.py "robot workflow" --include-vault --source-type v
 python .\rag\commands\search.py "iot contract" --path-contains IOT_CONTRACT
 python .\rag\commands\search.py "forgot password API" --doc-type api --exclude-overview
 python .\rag\commands\context.py "payment flow" --format markdown
+python .\rag\commands\search.py --lane code "PaymentSessionsController"
+python .\rag\commands\context.py --lane code "where refresh token is rotated" --format markdown
 ```
 
 Useful fields:
@@ -32,6 +40,7 @@ Useful fields:
 - `doc_type`: document intent, such as `api`, `flow`, `contract`, `architecture`, `domain`, or `decision`.
 - `source_type`: source folder class, such as `backend-doc`, `project-doc`, or `vault`.
 - `is_overview`: true for first/root chunks that often contain generic introduction text.
+- Code lane outputs may include `language`, `namespace`, `symbol_kind`, `symbol_name`, `start_line`, and `end_line`.
 
 Prefer metadata and path filters before increasing reranker candidate limits.
 
@@ -70,8 +79,20 @@ These caps apply in `raglib/vector_store.py`, so they cover `context.py`, `searc
 - `commands/search.py` is for inspecting retrieved chunks and metadata.
 - `commands/ask.py` is for generating an answer from retrieved chunks through OpenAI.
 - `mcp_server.py` is long-running and reuses embedding/reranker models as process-level singletons.
+- Use `--lane docs` for accepted docs and `--lane code` for source code.
 - Retrieval outputs include `section_index` and `section_path` from Markdown header-aware chunking when available.
 - Retrieval outputs include `source_group`, `doc_type`, and `is_overview` after the collection is re-ingested with the current metadata schema.
+- Code retrieval outputs include line and symbol metadata after `ingest_code.py`.
+
+## MCP Tools
+
+The MCP server exposes:
+
+- `retrieve_icebot_docs`: preferred for architecture, contracts, rules, flows, and business meaning.
+- `retrieve_icebot_code`: preferred for implementation, classes, endpoint wiring, and mapping details.
+- `retrieve_icebot_context`: lower-level tool with explicit `lane`.
+
+Prefer docs first. Use code when the question asks where or how something is implemented.
 
 ## Runtime Notes
 

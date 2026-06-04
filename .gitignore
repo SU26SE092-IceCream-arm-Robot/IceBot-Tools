@@ -6,7 +6,7 @@ __pycache__/
 .env
 !.env.example
 .local/
-rag/sources.local.json
+rag/sources.*.local.json
 
 # Generated vector database storage
 data/qdrant/

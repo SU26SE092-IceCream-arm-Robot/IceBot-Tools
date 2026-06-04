@@ -94,7 +94,7 @@ def get_source_group(source_type: str) -> str:
         return "docs"
     if source_type == "vault":
         return "vault"
-    if source_type == "code":
+    if source_type in {"code", "backend-code"}:
         return "code"
     if source_type == "log":
         return "logs"
@@ -121,6 +121,9 @@ def get_doc_type(file_path: Path, source_type: str, workspace_root: Path) -> str
             return "evolution"
         if "/research/" in relative_path:
             return "research"
+
+    if get_source_group(source_type) == "code":
+        return "source-code"
 
     return "reference"
 
