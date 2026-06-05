@@ -5,9 +5,11 @@ This folder contains local RAG scripts for searching and asking over IceBot proj
 ## Read First
 
 - [CONTEXT_ROUTING.md](CONTEXT_ROUTING.md): when to use RAG and which sources to trust.
-- [INDEXING.md](INDEXING.md): ingest, chunking, metadata, collection versioning, and cleanup.
-- [RETRIEVAL.md](RETRIEVAL.md): search/context/ask behavior, reranking, filters, and safety limits.
-- [MCP_SETUP.md](MCP_SETUP.md): exposing local retrieval to Codex through MCP.
+- [docs/SETUP.md](docs/SETUP.md): local environment, storage, run order, and MCP setup.
+- [docs/INDEXING.md](docs/INDEXING.md): ingest, chunking, metadata, collection versioning, and cleanup.
+- [docs/COLLECTION_SCHEMA.md](docs/COLLECTION_SCHEMA.md): Qdrant collection versioning, named vectors, manifests, and payload indexes.
+- [docs/RETRIEVAL.md](docs/RETRIEVAL.md): search/context/ask behavior, reranking, filters, and safety limits.
+- [docs/HYBRID_SEARCH.md](docs/HYBRID_SEARCH.md): dense + BM25 sparse hybrid retrieval and Qdrant RRF fusion.
 
 ## Files
 
@@ -41,47 +43,9 @@ This folder contains local RAG scripts for searching and asking over IceBot proj
 - IceBot-Tools docs are operational tooling docs. They are not ingested into the default project knowledge collection.
 - `IceBot-Backend/.project-memory` is working context only and must not be ingested into the long-lived vector database.
 
-## Storage Boundaries
-
-- `IceBot-Tools/data/qdrant` stores generated Qdrant data mounted by Docker.
-- `IceBot-Tools/logs/rag` stores runtime logs such as `ingest.log`.
-- `RAG_CACHE_ROOT` controls where local model/cache files are stored.
-- `FASTEMBED_CACHE_PATH` is set automatically to `CACHE_ROOT/fastembed`; set it explicitly only when you need a custom sparse-model cache location.
-- `RAG_LOG_DIR` controls where RAG runtime logs are stored.
-- RAG logs use size-based rotation by default: 10 MB per file and 10 backups.
-- `RAG_LOG_CONSOLE=false` keeps routine INFO logs in files only; console shows WARNING+ plus command summaries.
-- If `RAG_CACHE_ROOT` is unset, cache files use the user home cache folder: `~/.cache/icebot-rag`.
-- Do not copy canonical docs into `IceBot-Tools/data` as a permanent source. Ingest should read from the original source folders.
-
-## Qdrant Local Dashboard
-
-When the local Qdrant container is running, open:
-
-```text
-http://localhost:6333/dashboard
-```
-
-## Run Order
+## Quick Start
 
 Run commands from `IceBot-Tools`.
-
-Local environment:
-
-- `IceBot-Tools/rag/.env` stores local-only values and is ignored by git.
-- `IceBot-Tools/rag/.env.example` is the safe template.
-- `IceBot-Tools/rag/sources.docs.local.json` stores docs source overrides and is ignored by git.
-- `IceBot-Tools/rag/sources.code.local.json` stores code source overrides and is ignored by git.
-- `OPENAI_API_KEY` is required only for `commands/ask.py`.
-- `RAG_CACHE_ROOT` is optional. If unset, model/cache files use the user home cache folder: `~/.cache/icebot-rag`.
-- `RAG_LOG_DIR` is optional. If unset, logs use `IceBot-Tools/logs/rag`.
-- `RAG_LOG_MAX_BYTES` and `RAG_LOG_BACKUP_COUNT` are optional. Defaults keep about 110 MB per log stream.
-- `RAG_LOG_CONSOLE` is optional. Set `true` to show INFO logs in the terminal while debugging.
-- `RAG_CHUNK_SIZE` and `RAG_CHUNK_OVERLAP` are optional. Defaults are `800` and `120`.
-- `RAG_ENABLE_HYBRID` controls Qdrant dense+sparse hybrid retrieval. Default is `true`.
-- `RAG_SPARSE_MODEL` controls the sparse model used by `fastembed`. Default is `Qdrant/bm25`.
-- `commands/context.py`, `commands/search.py`, `commands/ingest_docs.py`, `commands/ingest_code.py`, and `mcp_server.py` do not call OpenAI directly.
-
-First-time setup:
 
 ```powershell
 docker compose -f docker\docker-compose.yml up -d
@@ -94,39 +58,13 @@ python .\rag\commands\ingest_docs.py
 python .\rag\commands\ingest_code.py
 python .\rag\commands\context.py "current payment flow"
 python .\rag\commands\context.py --lane code "PaymentSessionsController"
-python .\rag\commands\ask.py
 ```
 
-Later usage:
-
-```powershell
-docker compose -f docker\docker-compose.yml up -d
-.\.venv\Scripts\Activate.ps1
-python .\rag\commands\context.py "current payment flow"
-```
+See [docs/SETUP.md](docs/SETUP.md) for environment variables, storage boundaries, later usage, and MCP setup.
 
 ## MCP Server
 
-`mcp_server.py` exposes local retrieval as an MCP tool:
-
-```text
-retrieve_icebot_context
-retrieve_icebot_docs
-retrieve_icebot_code
-```
-
-It does not call OpenAI and does not need `OPENAI_API_KEY`. The IDE/model using MCP is responsible for reasoning over the returned context.
-`retrieve_icebot_context` is the router-level tool and accepts `mode=docs|code|both`; it defaults to docs. The docs/code tools are shortcuts.
-
-Run from `IceBot-Tools`:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python .\rag\mcp_server.py
-```
-
-The MCP server is a long-running process, so `raglib/vector_store.py` keeps the embedding model, reranker, and Qdrant client loaded and reuses them across tool calls.
-When hybrid retrieval is enabled, it also keeps the sparse BM25 model loaded.
+See [docs/SETUP.md](docs/SETUP.md#codex-mcp-registration) for Codex MCP registration and manual server runtime.
 
 ## Operational Notes
 

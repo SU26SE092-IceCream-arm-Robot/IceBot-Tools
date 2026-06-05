@@ -118,7 +118,7 @@ pip install -r requirements.txt
 
 - `start_rag_mcp`
   - Run `IceBot-Tools/rag/mcp_server.py` as a long-running MCP server for IDE/tool integration.
-  - Full Codex MCP setup is documented in `IceBot-Tools/rag/MCP_SETUP.md`.
+  - Full Codex MCP setup is documented in `IceBot-Tools/rag/docs/SETUP.md`.
 
 - `search_rag`
   - Run `IceBot-Tools/rag/commands/search.py` with common defaults.

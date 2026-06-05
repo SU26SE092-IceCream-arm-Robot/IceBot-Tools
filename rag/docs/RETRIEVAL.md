@@ -48,28 +48,11 @@ Prefer metadata and path filters before increasing reranker candidate limits.
 
 ## Hybrid Retrieval
 
-By default retrieval uses Qdrant-native hybrid search when `RAG_ENABLE_HYBRID=true`:
+Hybrid retrieval combines dense vector search and BM25 sparse search with Qdrant RRF fusion.
 
-```text
-query
-  -> dense embedding
-  -> BM25 sparse embedding
-  -> Qdrant dense prefetch + sparse prefetch
-  -> RRF fusion
-  -> optional cross-encoder rerank
-  -> top-k context
-```
+Use it for exact symbols, endpoint paths, enum values, class names, and mixed semantic/keyword queries.
 
-Dense vectors use `Qwen/Qwen3-Embedding-0.6B`. Sparse vectors use `Qdrant/bm25` through `fastembed`.
-
-Use `--no-hybrid` to compare against dense-only retrieval or debug hybrid behavior:
-
-```powershell
-python .\rag\commands\search.py --lane code "PaymentSessionsController" --no-hybrid
-python .\rag\commands\search.py --lane code "PaymentSessionsController"
-```
-
-Hybrid retrieval is especially useful for code and exact keywords such as class names, endpoint paths, enum values, field names, and file names. Semantic docs questions can still work well with dense retrieval, but hybrid is usually cheap enough to keep enabled.
+See [HYBRID_SEARCH.md](HYBRID_SEARCH.md) for the detailed flow, score fields, cache behavior, and fallback rules.
 
 ## Reranking
 

@@ -1,108 +1,33 @@
-import json
 from abc import ABC, abstractmethod
 from pathlib import Path
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
-    Distance,
     FieldCondition,
     Filter,
     MatchAny,
     MatchValue,
-    PayloadSchemaType,
     PointStruct,
-    SparseIndexParams,
     SparseVector,
-    SparseVectorParams,
-    VectorParams,
 )
 
-from raglib.collection_manifest import (
-    build_collection_manifest,
-    read_collection_manifest,
-    validate_collection_manifest,
-    write_collection_manifest,
+from raglib.collection_setup import (
+    default_payload_indexes,
+    ensure_collection,
+    ensure_payload_indexes,
 )
 from raglib.config import (
     DEFAULT_QDRANT_URL,
     EMBEDDING_MODEL,
     ENABLE_HYBRID,
     SPARSE_MODEL,
-    TOOLS_DIR,
     WORKSPACE_ROOT,
 )
+from raglib.source_config import load_source_configs, validate_source_paths
 from raglib.source_metadata import build_metadata
 
 
 BATCH_SIZE = 128
-
-
-def load_source_configs(collection_lane: dict, logger, missing_source_message: str) -> list[dict]:
-    sources_local_path = collection_lane["sources_local_path"]
-    sources_example_path = collection_lane["sources_example_path"]
-    source_config_path = sources_local_path if sources_local_path.exists() else sources_example_path
-    source_config_message = f"Using source config: {source_config_path}"
-    logger.info(source_config_message)
-    print(source_config_message)
-
-    if not source_config_path.exists():
-        raise SystemExit(
-            f"Missing source config: {source_config_path}\n"
-            f"{missing_source_message}"
-        )
-
-    try:
-        raw_sources = json.loads(source_config_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as ex:
-        raise SystemExit(f"Invalid JSON source config: {source_config_path}\n{ex}") from ex
-
-    if not isinstance(raw_sources, list):
-        raise SystemExit(f"Source config must be a JSON array: {source_config_path}")
-
-    source_configs = []
-
-    for index, source in enumerate(raw_sources):
-        if not isinstance(source, dict):
-            raise SystemExit(f"Source config item #{index + 1} must be an object.")
-
-        missing_fields = [
-            field_name for field_name in ("path", "source_type", "authority", "status")
-            if not source.get(field_name)
-        ]
-
-        if missing_fields:
-            raise SystemExit(
-                f"Source config item #{index + 1} is missing: {', '.join(missing_fields)}"
-            )
-
-        source_path = Path(source["path"])
-
-        if not source_path.is_absolute():
-            source_path = TOOLS_DIR / source_path
-
-        source_configs.append(
-            {
-                **source,
-                "path": source_path.resolve(),
-                "required": bool(source.get("required", False)),
-            }
-        )
-
-    return source_configs
-
-
-def validate_source_paths(source_configs: list[dict]) -> None:
-    missing_required_sources = [
-        source_config["path"]
-        for source_config in source_configs
-        if source_config["required"] and not source_config["path"].exists()
-    ]
-
-    if not missing_required_sources:
-        return
-
-    formatted_paths = "\n".join(f"- {source_path}" for source_path in missing_required_sources)
-    raise SystemExit(f"Missing required RAG source(s):\n{formatted_paths}")
 
 
 class BaseIngester(ABC):
@@ -144,86 +69,26 @@ class BaseIngester(ABC):
 
         return SparseTextEmbedding(model_name=SPARSE_MODEL)
 
-    def build_collection_manifest(self) -> dict:
-        return build_collection_manifest(
-            collection_lane=self.collection_lane_name,
-            collection_base_name=self.collection_lane["base_name"],
-            collection_name=self.collection_lane["name"],
-            collection_version=self.collection_lane["version"],
-            embedding_model=EMBEDDING_MODEL,
+    def ensure_collection(self) -> None:
+        ensure_collection(
+            client=self.client,
+            collection_lane_name=self.collection_lane_name,
+            collection_lane=self.collection_lane,
             embedding_dimension=self.embedding_dimension,
-            vector_schema="named_dense_sparse" if ENABLE_HYBRID else "named_dense",
-            hybrid_enabled=ENABLE_HYBRID,
-            sparse_model=SPARSE_MODEL if ENABLE_HYBRID else None,
+            logger=self.logger,
+            missing_manifest_message=self.missing_manifest_message,
         )
 
-    def ensure_collection(self) -> None:
-        manifest_path = self.collection_lane["manifest_path"]
-
-        if not self.client.collection_exists(collection_name=self.collection_name):
-            self.logger.info("Creating Qdrant collection: %s", self.collection_name)
-            sparse_vectors_config = None
-
-            if ENABLE_HYBRID:
-                sparse_vectors_config = {
-                    "sparse": SparseVectorParams(index=SparseIndexParams()),
-                }
-
-            self.client.create_collection(
-                collection_name=self.collection_name,
-                vectors_config={
-                    "dense": VectorParams(
-                        size=self.embedding_dimension,
-                        distance=Distance.COSINE,
-                    ),
-                },
-                sparse_vectors_config=sparse_vectors_config,
-            )
-            write_collection_manifest(manifest_path, self.build_collection_manifest())
-            self.logger.info("Wrote collection manifest: %s", manifest_path)
-            return
-
-        manifest = read_collection_manifest(manifest_path)
-
-        if manifest is None:
-            raise SystemExit(
-                f"Missing collection manifest: {manifest_path}\n"
-                "Do not ingest into an existing collection without metadata. "
-                f"{self.missing_manifest_message}"
-            )
-
-        validate_collection_manifest(manifest, self.build_collection_manifest())
-        self.logger.info("Validated collection manifest: %s", manifest_path)
-
     def ensure_payload_indexes(self) -> None:
-        for field_name, field_schema in self.payload_indexes().items():
-            try:
-                self.client.create_payload_index(
-                    collection_name=self.collection_name,
-                    field_name=field_name,
-                    field_schema=field_schema,
-                )
-                self.logger.info("Ensured payload index: %s", field_name)
-            except Exception as ex:
-                message = str(ex).lower()
-
-                if "already exists" in message or "already has" in message:
-                    continue
-
-                raise
+        ensure_payload_indexes(
+            self.client,
+            self.collection_name,
+            self.payload_indexes(),
+            self.logger,
+        )
 
     def payload_indexes(self) -> dict:
-        return {
-            "authority": PayloadSchemaType.KEYWORD,
-            "status": PayloadSchemaType.KEYWORD,
-            "source_type": PayloadSchemaType.KEYWORD,
-            "source_group": PayloadSchemaType.KEYWORD,
-            "doc_type": PayloadSchemaType.KEYWORD,
-            "source": PayloadSchemaType.KEYWORD,
-            "file_id": PayloadSchemaType.KEYWORD,
-            "file_hash": PayloadSchemaType.KEYWORD,
-            "source_path": PayloadSchemaType.TEXT,
-        }
+        return default_payload_indexes()
 
     def delete_existing_file_points(self, file_id: str) -> None:
         self.client.delete(
