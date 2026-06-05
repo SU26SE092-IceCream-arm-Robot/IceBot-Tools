@@ -19,6 +19,7 @@ EXCLUDED_SOURCE_PATHS = set()
 EXCLUDED_SOURCE_PREFIXES = {
     "Vault/Learning/Personal/",
     "Vault/Learning/Tooling/",
+    "Vault/Research/Papers/",
 }
 
 LOGGER = configure_logger("icebot.rag.ingest", "ingest.log")

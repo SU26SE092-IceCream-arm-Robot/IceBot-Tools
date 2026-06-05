@@ -79,6 +79,9 @@ Currently excluded by prefix:
 
 - `Vault/Learning/Personal/`
 - `Vault/Learning/Tooling/`
+- `Vault/Research/Papers/`
+
+`Vault/Research/Papers/` contains intermediate paper-digestion notes. They are summaries and possible implementation ideas, not applied learning or project truth, so they should not enter the long-term RAG database by default.
 
 ## Payload Indexes
 

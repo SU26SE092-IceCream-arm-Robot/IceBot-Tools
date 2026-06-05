@@ -19,6 +19,7 @@ EXCLUDED_SOURCE_PATHS = set()
 EXCLUDED_SOURCE_PREFIXES = {
     "Vault/Learning/Personal/",
     "Vault/Learning/Tooling/",
+    "Vault/Research/Papers/",
 }
 INCLUDED_CODE_SUFFIXES = {".cs", ".csproj", ".json", ".props", ".targets"}
 EXCLUDED_CODE_PARTS = {
