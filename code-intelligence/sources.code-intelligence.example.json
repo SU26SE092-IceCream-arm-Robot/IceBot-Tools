@@ -1,0 +1,23 @@
+[
+  {
+    "repository_key": "icebot-backend",
+    "display_name": "IceBot Backend",
+    "path": "../IceBot-Backend",
+    "enabled": true,
+    "language": "mixed",
+    "include": [
+      "src/**/*.cs",
+      "docs/**/*.md",
+      "ARCHITECTURE.md",
+      "AGENTS.md"
+    ],
+    "exclude": [
+      "**/bin/**",
+      "**/obj/**",
+      "**/.git/**",
+      "**/Migrations/**",
+      "**/*.Designer.cs",
+      "**/appsettings.Development.json"
+    ]
+  }
+]

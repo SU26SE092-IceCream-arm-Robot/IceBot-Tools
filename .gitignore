@@ -21,3 +21,7 @@ logs/
 # Legacy/generated log-analyzer outputs
 log-analyzer/mock_logs/
 log-analyzer/violations.log
+
+# Code Intelligence outputs
+data/code_intelligence/
+code-intelligence/sources.code-intelligence.local.json

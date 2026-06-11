@@ -258,7 +258,7 @@ Start with SQLite generated indexes. JSON exports are debug/human-inspection art
 
 ## Implementation Phases
 
-### Phase 1: Stable Inventory
+### Phase 1: Stable Inventory [COMPLETE]
 
 - scan source files;
 - compute file hashes;
@@ -266,7 +266,7 @@ Start with SQLite generated indexes. JSON exports are debug/human-inspection art
 - extract class/interface/enum names;
 - cache results under `data/code_intelligence`.
 
-### Phase 2: Backend Structure Index
+### Phase 2: Backend Structure Index [COMPLETE]
 
 - controllers and routes;
 - GraphQL root fields/resolvers;
@@ -274,7 +274,7 @@ Start with SQLite generated indexes. JSON exports are debug/human-inspection art
 - store interfaces and implementations;
 - DI registrations.
 
-### Phase 3: Router Integration
+### Phase 3: Router Integration [COMPLETE]
 
 - route docs/code/both/memory;
 - expose retrieval mode decisions;
