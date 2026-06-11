@@ -10,8 +10,14 @@ rag/sources.*.local.json
 
 # Generated vector database storage
 data/qdrant/
+data/qdrant_local/
 data/rag_collections/
 data/pdf_extracts/
+data/log-analyzer/
 
 # Runtime logs
 logs/
+
+# Legacy/generated log-analyzer outputs
+log-analyzer/mock_logs/
+log-analyzer/violations.log

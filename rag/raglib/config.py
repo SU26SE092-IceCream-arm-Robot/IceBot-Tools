@@ -100,3 +100,30 @@ def setup_cache_env() -> None:
     os.environ.setdefault("HF_HOME", str(CACHE_ROOT / "huggingface"))
     os.environ.setdefault("SENTENCE_TRANSFORMERS_HOME", str(CACHE_ROOT / "sentence-transformers"))
     os.environ.setdefault("FASTEMBED_CACHE_PATH", str(CACHE_ROOT / "fastembed"))
+
+
+def get_qdrant_client():
+    from qdrant_client import QdrantClient
+    url = os.getenv("QDRANT_URL", "http://localhost:6333")
+
+    local_path = Path(os.getenv("QDRANT_LOCAL_PATH", str(TOOLS_DIR / "data" / "qdrant_local")))
+
+    if url.lower() == "local":
+        local_path.mkdir(parents=True, exist_ok=True)
+        return QdrantClient(path=str(local_path))
+
+    try:
+        import urllib.request
+        # Check if the url has schema
+        test_url = url
+        if not test_url.startswith("http://") and not test_url.startswith("https://"):
+            test_url = "http://" + test_url
+        urllib.request.urlopen(test_url, timeout=1.0)
+        return QdrantClient(url=url)
+    except Exception:
+        local_path.mkdir(parents=True, exist_ok=True)
+        import logging
+        logging.getLogger("icebot.rag").warning(
+            f"Failed to connect to Qdrant at {url}. Falling back to local storage: {local_path}"
+        )
+        return QdrantClient(path=str(local_path))

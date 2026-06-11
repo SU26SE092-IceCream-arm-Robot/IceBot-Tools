@@ -70,4 +70,5 @@ See [docs/SETUP.md](docs/SETUP.md#codex-mcp-registration) for Codex MCP registra
 
 - Keep Qdrant storage, model cache, and knowledge sources separate.
 - Do not rename storage folders or change paths just because a naming question is being discussed. Apply structural changes only after an explicit decision.
-- Hybrid search requires the current named-vector schema. `v1` is the initial active collection version because no earlier collection data is being preserved.
+- Hybrid search requires the current named-vector schema.
+- Changing embedding model, vector dimension, sparse model, or vector schema requires a new collection version and manual re-ingest.

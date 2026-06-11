@@ -6,6 +6,8 @@ It is separate from `rag/` because code intelligence should not depend only on v
 
 ## Planned Parts
 
+- [Code Intelligence System](docs/CODE_INTELLIGENCE_SYSTEM.md)
+- [Gemini Implementation Plan](docs/GEMINI_CODE_INTELLIGENCE_IMPLEMENTATION_PLAN.md)
 - [Semantic Code Index](docs/SEMANTIC_CODE_INDEX.md)
 - [Intermediate Cache](docs/INTERMEDIATE_CACHE.md)
 
@@ -15,4 +17,3 @@ It is separate from `rag/` because code intelligence should not depend only on v
 - It is not backend source of truth.
 - It should not replace compiler checks, `rg`, or direct code review.
 - Generated indexes and caches should live under `data/` and stay ignored by git.
-

@@ -10,6 +10,7 @@ It is not the official project harness. Project-facing demo, integration, simula
 | --- | --- |
 | `rag/` | Local RAG, MCP server, indexing, retrieval, and context routing. |
 | `code-intelligence/` | Future symbol/reference/endpoint indexing and derived cache for coding-agent workflows. |
+| `log-analyzer/` | Local log tailing, error grouping, and runtime/design violation diagnostics. |
 | `pdf/` | PDF extraction workflow for turning source PDFs into reviewed curated notes. |
 | `docker/` | Local Docker Compose files for tooling services. |
 | `scripts/` | Small helper scripts for local tooling workflows. |
@@ -21,6 +22,9 @@ It is not the official project harness. Project-facing demo, integration, simula
 
 - RAG setup and usage: [rag/README.md](rag/README.md)
 - Code intelligence direction: [code-intelligence/README.md](code-intelligence/README.md)
+- Code intelligence system plan: [code-intelligence/docs/CODE_INTELLIGENCE_SYSTEM.md](code-intelligence/docs/CODE_INTELLIGENCE_SYSTEM.md)
+- Code intelligence implementation plan: [code-intelligence/docs/GEMINI_CODE_INTELLIGENCE_IMPLEMENTATION_PLAN.md](code-intelligence/docs/GEMINI_CODE_INTELLIGENCE_IMPLEMENTATION_PLAN.md)
+- Log analyzer usage: [log-analyzer/README.md](log-analyzer/README.md)
 - PDF extraction workflow: [pdf/docs/PDF_WORKFLOW.md](pdf/docs/PDF_WORKFLOW.md)
 - Helper scripts: [scripts/README.md](scripts/README.md)
 - Local infrastructure note templates: [infrastructure/README.md](infrastructure/README.md)
@@ -32,5 +36,6 @@ It is not the official project harness. Project-facing demo, integration, simula
 - Keep raw PDF extracts in `data/pdf_extracts/`; review and curate notes before moving knowledge into `Vault`.
 - Keep operational RAG instructions in `rag/`.
 - Keep generated code-intelligence indexes and caches in `data/code_intelligence/`.
+- Keep generated log-analyzer mock logs in `data/log-analyzer/` and analyzer output in `logs/log-analyzer/`.
 - Keep reusable project-facing harness code out of this repo until `IceBot-Harness` exists.
 - Do not commit API keys, tokens, passwords, or provider credentials.

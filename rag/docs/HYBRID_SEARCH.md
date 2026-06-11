@@ -16,7 +16,7 @@ query
   -> top-k context
 ```
 
-Dense vectors use `Qwen/Qwen3-Embedding-0.6B`.
+Dense vectors use the configured `RAG_EMBEDDING_MODEL`.
 Sparse vectors use `Qdrant/bm25` through `fastembed`.
 
 ## Why Hybrid

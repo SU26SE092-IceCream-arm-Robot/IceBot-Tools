@@ -9,6 +9,7 @@ The active Qdrant collections are versioned:
 ```text
 icebot_docs_knowledge_v1
 icebot_code_knowledge_v1
+icebot_docs_knowledge_v2
 ```
 
 `icebot_docs_knowledge` and `icebot_code_knowledge` are logical base names.
@@ -16,14 +17,21 @@ Bump `RAG_DOCS_COLLECTION_VERSION` or `RAG_CODE_COLLECTION_VERSION` when changin
 
 ## Vector Schema
 
-Collection `v1` uses Qdrant named vectors:
+Collections use Qdrant named vectors:
 
 ```text
-dense  -> Qwen/Qwen3-Embedding-0.6B cosine vector
+dense  -> configured RAG_EMBEDDING_MODEL cosine vector
 sparse -> Qdrant/bm25 sparse vector, when RAG_ENABLE_HYBRID=true
 ```
 
-Hybrid retrieval requires this named vector schema. Because `v1` has not been used as an active production collection yet, `v1` remains the initial collection version for the current schema.
+Hybrid retrieval requires this named vector schema. The collection version records which embedding/vector schema was used.
+
+Examples:
+
+```text
+v1 -> Qwen/Qwen3-Embedding-0.6B baseline
+v2 -> Qwen/Qwen3-Embedding-4B local trial
+```
 
 Set `RAG_ENABLE_HYBRID=false` only when you need a named dense-only collection for debugging or dependency troubleshooting.
 
@@ -87,11 +95,7 @@ Ingest commands create Qdrant payload indexes for frequently filtered fields:
 
 ## Script Alignment
 
-`commands/ingest_docs.py`, `commands/ingest_code.py`, `commands/context.py`, `commands/search.py`, and `commands/ask.py` must use the same embedding model:
-
-```text
-Qwen/Qwen3-Embedding-0.6B
-```
+`commands/ingest_docs.py`, `commands/ingest_code.py`, `commands/context.py`, `commands/search.py`, and `commands/ask.py` must use the same configured embedding model for a given collection version.
 
 Changing the embedding model requires a new collection version and full re-ingest because vector dimensions and embedding spaces may change.
 

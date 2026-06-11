@@ -14,6 +14,7 @@ from raglib.config import (
     SPARSE_MODEL,
     get_collection_lane,
     setup_cache_env,
+    get_qdrant_client as get_config_qdrant_client,
 )
 from raglib.retrieval import build_filter, rerank_results
 
@@ -80,7 +81,7 @@ def get_qdrant_client():
     setup_cache_env()
 
     if _client is None:
-        _client = QdrantClient(url=os.getenv("QDRANT_URL", DEFAULT_QDRANT_URL))
+        _client = get_config_qdrant_client()
 
     return _client
 

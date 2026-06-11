@@ -7,6 +7,7 @@ Run commands from `IceBot-Tools`.
 ## Storage Boundaries
 
 - `IceBot-Tools/data/qdrant` stores generated Qdrant data mounted by Docker.
+- `IceBot-Tools/data/qdrant_local` stores generated Qdrant data when the tooling falls back to Qdrant local mode.
 - `IceBot-Tools/logs/rag` stores runtime logs such as `ingest.log`.
 - `RAG_CACHE_ROOT` controls where local model/cache files are stored.
 - `FASTEMBED_CACHE_PATH` is set automatically to `CACHE_ROOT/fastembed`; set it explicitly only when you need a custom sparse-model cache location.
@@ -24,6 +25,24 @@ When the local Qdrant container is running, open:
 http://localhost:6333/dashboard
 ```
 
+## Qdrant Server And Local Fallback
+
+RAG tooling first tries the configured Qdrant HTTP server, usually:
+
+```text
+http://localhost:6333
+```
+
+If the server is unavailable, the shared Qdrant client helper can fall back to Qdrant local mode and write generated vector data under:
+
+```text
+IceBot-Tools/data/qdrant_local
+```
+
+Use `QDRANT_URL=local` to force local mode. Use `QDRANT_LOCAL_PATH` only when you need local Qdrant data outside the default `IceBot-Tools/data/qdrant_local` folder.
+
+Use local mode when Docker Desktop or the Qdrant container is unavailable. Local fallback is useful for personal/offline ingest and retrieval, but it is still generated machine-local state. Do not treat it as canonical project knowledge.
+
 ## Local Environment
 
 - `IceBot-Tools/rag/.env` stores local-only values and is ignored by git.
@@ -31,6 +50,8 @@ http://localhost:6333/dashboard
 - `IceBot-Tools/rag/sources.docs.local.json` stores docs source overrides and is ignored by git.
 - `IceBot-Tools/rag/sources.code.local.json` stores code source overrides and is ignored by git.
 - `OPENAI_API_KEY` is required only for `commands/ask.py`.
+- `QDRANT_URL=local` forces Qdrant local mode. If the configured HTTP server is unavailable, the tooling can also fall back to local mode automatically.
+- `QDRANT_LOCAL_PATH` is optional. If unset, local Qdrant mode uses `IceBot-Tools/data/qdrant_local`.
 - `RAG_CACHE_ROOT` is optional. If unset, model/cache files use the user home cache folder: `~/.cache/icebot-rag`.
 - `RAG_LOG_DIR` is optional. If unset, logs use `IceBot-Tools/logs/rag`.
 - `RAG_LOG_MAX_BYTES` and `RAG_LOG_BACKUP_COUNT` are optional. Defaults keep about 110 MB per log stream.
@@ -38,6 +59,8 @@ http://localhost:6333/dashboard
 - `RAG_CHUNK_SIZE` and `RAG_CHUNK_OVERLAP` are optional. Defaults are `800` and `120`.
 - `RAG_ENABLE_HYBRID` controls Qdrant dense+sparse hybrid retrieval. Default is `true`.
 - `RAG_SPARSE_MODEL` controls the sparse model used by `fastembed`. Default is `Qdrant/bm25`.
+- `RAG_EMBEDDING_MODEL` controls the dense embedding model. If you change it, also change the relevant collection version and re-ingest.
+- `RAG_DOCS_COLLECTION_VERSION` and `RAG_CODE_COLLECTION_VERSION` separate incompatible collection schemas or embedding spaces.
 - `commands/context.py`, `commands/search.py`, `commands/ingest_docs.py`, `commands/ingest_code.py`, and `mcp_server.py` do not call OpenAI directly.
 
 ## First-Time Setup
@@ -138,4 +161,6 @@ The tools accept `use_hybrid=true|false`. Hybrid uses Qdrant dense+sparse retrie
 
 - Keep Qdrant storage, model cache, and knowledge sources separate.
 - Do not rename storage folders or change paths just because a naming question is being discussed. Apply structural changes only after an explicit decision.
-- Hybrid search requires the current named-vector schema. `v1` is the initial active collection version because no earlier collection data is being preserved.
+- Hybrid search requires the current named-vector schema.
+- Changing embedding model, embedding dimension, sparse model, or vector schema requires a new collection version and manual re-ingest.
+- Example: local testing can use `Qwen/Qwen3-Embedding-4B` with `RAG_DOCS_COLLECTION_VERSION=v2` while the previous `0.6B` collection remains separate.
