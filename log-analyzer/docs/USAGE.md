@@ -1,33 +1,22 @@
-# Log Analyzer
+# Log Analyzer Usage
 
-The log analyzer tails WebAPI and robot runtime log files, groups repeated errors, and reports simple design/runtime violations.
+The log analyzer tails WebAPI and robot-style runtime logs, groups repeated errors, and reports simple runtime/design violations.
 
-This is local tooling. It is not a production monitoring system and it is not the official IceBot runtime contract.
-
-## What It Watches
-
-- WebAPI logs in JSON/Serilog-style line format.
-- Robot logs in text format:
-
-```text
-[2026-06-11 22:52:00] [ERROR] RobotController: Failed to execute command.
-```
-
-Plain-text WebAPI fallback is intentionally minimal in V1. Prefer structured WebAPI logs when using this tool.
+It is local tooling. It is not production monitoring and not the official IceBot runtime contract.
 
 ## Current Checks
 
-- `SLOW_DATABASE_QUERY`: EF Core database command elapsed time greater than `500ms`.
+- `SLOW_DATABASE_QUERY`: EF Core command elapsed time greater than `500ms`.
 - `THREAD_BLOCKED`: robot control thread blocked longer than `1000ms`.
 - repeated exception grouping by source, exception type, normalized message, and top stack frames.
 
 ## Generated Data
 
-Generated data is kept outside the source folder:
+Generated data belongs outside source folders:
 
 ```text
-IceBot-Tools/data/log-analyzer/mock_logs/
-IceBot-Tools/logs/log-analyzer/violations.log
+data/log-analyzer/mock_logs/
+logs/log-analyzer/violations.log
 ```
 
 Both locations are ignored by git.
@@ -46,17 +35,10 @@ In a second terminal:
 .\.venv\Scripts\python.exe .\log-analyzer\generate_mock_logs.py
 ```
 
-For a short smoke test that exits automatically:
+Short smoke test:
 
 ```powershell
 .\.venv\Scripts\python.exe .\log-analyzer\generate_mock_logs.py --count 5
-```
-
-The analyzer defaults to:
-
-```text
-data/log-analyzer/mock_logs/webapi
-data/log-analyzer/mock_logs/robot
 ```
 
 ## Run Against Real Logs
@@ -67,7 +49,7 @@ data/log-analyzer/mock_logs/robot
   --robot-path "D:\path\to\robot\logs"
 ```
 
-Override the violations output path if needed:
+Override violation output:
 
 ```powershell
 .\.venv\Scripts\python.exe .\log-analyzer\analyzer.py `

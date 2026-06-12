@@ -1,46 +1,42 @@
 # IceBot-Tools
 
-This repository contains personal/local tooling used while developing and researching the IceBot project.
+Local tooling for IceBot development: RAG, MCP, Code Intelligence, diagnostics, PDF extraction, Docker helpers, and scripts.
 
-It is not the official project harness. Project-facing demo, integration, simulator, or smoke-test automation should live in a future `IceBot-Harness` repository.
+This repository is not project source of truth and is not the future public harness. Project-facing simulator, smoke-test, or demo automation should live in a separate `IceBot-Harness` repository when needed.
+
+## Read First
+
+- Main commands: [docs/ENTRYPOINTS.md](docs/ENTRYPOINTS.md)
+- Tool boundaries: [docs/TOOLING.md](docs/TOOLING.md)
+- Storage and generated data: [docs/STORAGE.md](docs/STORAGE.md)
+- RAG setup: [rag/docs/SETUP.md](rag/docs/SETUP.md)
+- Code Intelligence design: [code-intelligence/docs/CODE_INTELLIGENCE_SYSTEM.md](code-intelligence/docs/CODE_INTELLIGENCE_SYSTEM.md)
+- Code Intelligence commands: [code-intelligence/docs/USAGE.md](code-intelligence/docs/USAGE.md)
+- Log Analyzer commands: [log-analyzer/docs/USAGE.md](log-analyzer/docs/USAGE.md)
+- PDF workflow: [pdf/docs/PDF_WORKFLOW.md](pdf/docs/PDF_WORKFLOW.md)
 
 ## Folder Map
 
 | Folder | Purpose |
 | --- | --- |
-| `toolcore/` | Shared workspace paths, configuration loading, ignore rules, and logging infrastructure. |
-| `mcp/` | Unified Model Context Protocol (MCP) server over semantic RAG and structural Code Intelligence. |
-| `rag/` | Local RAG indexing, semantic retrieval, and context routing. |
-| `code-intelligence/` | Structural code indexing (symbols, routes, handlers, stores, relations) and lookups. |
-| `log-analyzer/` | Local log tailing, error grouping, and runtime/design violation diagnostics. |
-| `pdf/` | PDF extraction workflow for turning source PDFs into reviewed curated notes. |
-| `docker/` | Local Docker Compose files for tooling services. |
-| `scripts/` | Small helper scripts for local tooling workflows. |
+| `toolcore/` | Shared workspace paths, source config loading, ignore rules, and logging infrastructure. |
+| `mcp/` | Unified MCP server over RAG and Code Intelligence. |
+| `rag/` | Semantic retrieval, indexing, and context routing. |
+| `code-intelligence/` | Structural code index and exact lookups. |
+| `log-analyzer/` | Local log grouping and diagnostic checks. |
+| `pdf/` | PDF extraction and paper/source review workflow. |
+| `docker/` | Docker Compose files for local tooling services. |
+| `scripts/` | Helper scripts for local workflows. |
 | `infrastructure/` | Public-safe templates for local machine/runtime notes. |
-| `data/` | Generated local data such as Qdrant storage and SQLite indexes. Ignored by git. |
+| `data/` | Generated local data. Ignored by git. |
 | `.local/` | Private machine-specific notes. Ignored by git. |
 
-## Read First
+## Rules
 
-- MCP Server usage & tools: [mcp/README.md](mcp/README.md)
-- RAG setup and usage: [rag/README.md](rag/README.md)
-- Code intelligence usage: [code-intelligence/README.md](code-intelligence/README.md)
-- Code intelligence system design: [code-intelligence/docs/CODE_INTELLIGENCE_SYSTEM.md](code-intelligence/docs/CODE_INTELLIGENCE_SYSTEM.md)
-- Log analyzer usage: [log-analyzer/README.md](log-analyzer/README.md)
-- PDF extraction workflow: [pdf/docs/PDF_WORKFLOW.md](pdf/docs/PDF_WORKFLOW.md)
-- Helper scripts: [scripts/README.md](scripts/README.md)
-- Local infrastructure note templates: [infrastructure/README.md](infrastructure/README.md)
-
-## Boundaries
-
-- Keep machine-specific notes in `.local/`.
 - Keep generated data in `data/`.
-- Keep raw PDF extracts in `data/pdf_extracts/`; review and curate notes before moving knowledge into `Vault`.
-- Keep shared tooling utilities (not containing RAG or scanner logic) in `toolcore/`.
-- Keep RAG-specific operational config, ingestion, and vector store helpers in `rag/`.
-- Keep Code Intelligence indexing, scanning, and lookup queries in `code-intelligence/`.
-- Keep MCP adapters and servers in `mcp/`.
-- Keep generated code-intelligence indexes and caches in `data/code_intelligence/`.
-- Keep generated log-analyzer mock logs in `data/log-analyzer/` and analyzer output in `logs/log-analyzer/`.
-- Keep reusable project-facing harness code out of this repo until `IceBot-Harness` exists.
-- Do not commit API keys, tokens, passwords, or provider credentials.
+- Keep runtime logs in `logs/`.
+- Keep machine-specific notes in `.local/`.
+- Keep shared helper infrastructure in `toolcore/`.
+- Keep RAG and Code Intelligence as separate capability lanes.
+- Keep MCP as the adapter over both lanes.
+- Do not commit secrets, provider credentials, real customer logs, or private machine details.

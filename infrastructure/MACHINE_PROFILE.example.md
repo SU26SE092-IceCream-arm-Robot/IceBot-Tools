@@ -30,12 +30,12 @@ It is not project architecture truth and should not be treated as a long-lived R
 
 - RAG env file: `IceBot-Tools/rag/.env`
 - RAG env template: `IceBot-Tools/rag/.env.example`
-- RAG usage guide: `IceBot-Tools/rag/README.md`
+- RAG usage guide: `IceBot-Tools/rag/docs/SETUP.md`
 - RAG runtime constants: `IceBot-Tools/rag/raglib/config.py`
 - Optional cache override: `RAG_CACHE_ROOT`
 
 Do not duplicate model names, collection names, or Qdrant endpoint details here.
-Those values should be read from the RAG README and config code.
+Those values should be read from the RAG setup docs and config code.
 
 ## Expected Usage
 
