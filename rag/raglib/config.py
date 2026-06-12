@@ -1,10 +1,9 @@
 import os
 from pathlib import Path
 
+from toolcore.workspace import TOOLS_DIR, WORKSPACE_ROOT
 RAGLIB_DIR = Path(__file__).resolve().parent
 RAG_DIR = RAGLIB_DIR.parent
-TOOLS_DIR = RAG_DIR.parent
-WORKSPACE_ROOT = TOOLS_DIR.parent
 
 
 def load_rag_env() -> None:

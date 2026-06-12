@@ -18,9 +18,8 @@ This folder contains local RAG scripts for searching and asking over IceBot proj
 - `commands/context.py`: retrieves context without calling an LLM, intended for Codex IDE/CLI use.
 - `commands/search.py`: retrieves and prints chunks for inspection.
 - `commands/ask.py`: retrieves chunks and asks OpenAI to answer from that context.
-- `mcp_server.py`: exposes local RAG retrieval as an MCP server without calling OpenAI directly.
-- `raglib/config.py`: shared constants, workspace paths, model names, Qdrant URL, and cache environment setup.
-- `raglib/logging.py`: shared console and file logging setup for RAG commands.
+- `raglib/config.py`: Shared constants, model configurations, and environment setups, importing workspace paths from `toolcore.workspace`.
+- `raglib/logging.py`: RAG logging configuration delegating to `toolcore.logging`.
 - `raglib/source_metadata.py`: source path normalization, file hash, point id, and metadata helpers.
 - `raglib/markdown_chunking.py`: Markdown header-aware chunking before recursive text splitting.
 - `raglib/code_chunking.py`: source-code chunking with basic language, namespace, symbol, and line metadata.

@@ -1,6 +1,6 @@
 # Code Intelligence System
 
-This document describes the planned IceBot-Tools code-intelligence system.
+This document describes the IceBot-Tools code-intelligence system.
 
 It is a tooling roadmap, not project source of truth.
 
@@ -47,16 +47,10 @@ Embedding search can find related text, but it is not the best tool for exact sy
 
 ```text
 IceBot-Tools
-|-- rag
-|   |-- docs/code semantic retrieval
-|   |-- dense + BM25 hybrid search
-|   `-- MCP retrieval tools
-|
-|-- code-intelligence
-|   |-- symbol and reference indexes
-|   |-- endpoint-to-handler maps
-|   |-- interface-to-implementation maps
-|   `-- generated caches
+|-- toolcore/              # shared workspace, config, and logger utilities
+|-- mcp/                   # unified MCP server over both capability lanes
+|-- rag/                   # semantic retrieval lane (docs/code RAG)
+|-- code-intelligence/     # structural code index lane (symbols/endpoints/handlers)
 |
 `-- scripts
     |-- diagnostics
@@ -104,17 +98,24 @@ exact path/symbol search
 
 Agents should not rebuild the same project map every time.
 
-Cache derived facts such as:
+In V1, the intermediate cache is the SQLite code index under:
 
-- repo summary;
+```text
+data/code_intelligence/icebot_code_index.sqlite
+```
+
+It currently caches derived facts such as:
+
 - file inventory;
 - file hash state;
 - symbol index;
-- endpoint-to-handler map;
+- REST endpoint mappings;
+- endpoint-to-handler mappings;
+- GraphQL resolver-to-handler mappings;
 - interface implementation map;
 - DI registration map;
-- bounded-context/module map;
-- RAG collection manifests.
+- handler-to-store relationships;
+- bounded-context/module hints.
 
 Generated cache should live under:
 
@@ -128,7 +129,8 @@ Rules:
 - cache can be deleted and rebuilt;
 - cache must not contain secrets;
 - source code and official docs always beat cache;
-- cache should use file hashes to skip unchanged files.
+- cache should use file hashes to skip unchanged files;
+- indexing should be run manually when needed, not automatically from unrelated workflows.
 
 ## Better Retrieval And Router
 

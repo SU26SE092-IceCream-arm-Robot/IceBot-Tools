@@ -1,18 +1,20 @@
+import sys
+from pathlib import Path
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+# Determine workspace tools directory
+tools_dir = Path(__file__).resolve().parent.parent.parent
+
+# Add RAG directory to path to allow importing raglib
+sys.path.append(str(tools_dir / "rag"))
 
 from raglib.config import setup_cache_env
 from raglib.context_router import retrieve_by_mode
 from raglib.result_formatting import result_to_dict
 
-
+# Setup standard HuggingFace/SentenceTransformers cache folders
 setup_cache_env()
 
-mcp = FastMCP("icebot-rag")
-
-
-@mcp.tool()
 def retrieve_icebot_context(
     query: str,
     mode: str = "docs",
@@ -46,15 +48,12 @@ def retrieve_icebot_context(
         use_reranker=use_reranker,
         use_hybrid=use_hybrid,
     )
-
     return {
         "query": query,
         "mode": mode,
         "contexts": [result_to_dict(result) for result in results],
     }
 
-
-@mcp.tool()
 def retrieve_icebot_docs(
     query: str,
     limit: int = 5,
@@ -88,8 +87,6 @@ def retrieve_icebot_docs(
         use_hybrid=use_hybrid,
     )
 
-
-@mcp.tool()
 def retrieve_icebot_code(
     query: str,
     limit: int = 5,
@@ -112,7 +109,3 @@ def retrieve_icebot_code(
         use_reranker=use_reranker,
         use_hybrid=use_hybrid,
     )
-
-
-if __name__ == "__main__":
-    mcp.run()

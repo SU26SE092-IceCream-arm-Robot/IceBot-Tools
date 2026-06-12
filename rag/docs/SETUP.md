@@ -61,7 +61,7 @@ Use local mode when Docker Desktop or the Qdrant container is unavailable. Local
 - `RAG_SPARSE_MODEL` controls the sparse model used by `fastembed`. Default is `Qdrant/bm25`.
 - `RAG_EMBEDDING_MODEL` controls the dense embedding model. If you change it, also change the relevant collection version and re-ingest.
 - `RAG_DOCS_COLLECTION_VERSION` and `RAG_CODE_COLLECTION_VERSION` separate incompatible collection schemas or embedding spaces.
-- `commands/context.py`, `commands/search.py`, `commands/ingest_docs.py`, `commands/ingest_code.py`, and `mcp_server.py` do not call OpenAI directly.
+- `commands/context.py`, `commands/search.py`, `commands/ingest_docs.py`, `commands/ingest_code.py`, and `../mcp/server.py` do not call OpenAI directly.
 
 ## First-Time Setup
 
@@ -89,12 +89,16 @@ python .\rag\commands\context.py "current payment flow"
 
 ## MCP Server
 
-`mcp_server.py` exposes local retrieval as an MCP tool:
+The unified MCP server is located at `mcp/server.py` and exposes retrieval and lookups:
 
 ```text
 retrieve_icebot_context
 retrieve_icebot_docs
 retrieve_icebot_code
+lookup_icebot_symbol
+lookup_icebot_endpoint
+lookup_icebot_handler
+verify_icebot_code_index
 ```
 
 It does not call OpenAI and does not need `OPENAI_API_KEY`. The IDE/model using MCP is responsible for reasoning over the returned context.
@@ -105,24 +109,26 @@ Run from `IceBot-Tools`:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
-python .\rag\mcp_server.py
+.\.venv\Scripts\python.exe .\mcp\server.py
 ```
 
-The MCP server is a long-running process, so `raglib/vector_store.py` keeps the embedding model, reranker, Qdrant client, and optional sparse BM25 model loaded and reuses them across tool calls.
+If the virtual environment is already activated, `python .\mcp\server.py` is also fine.
+
+The MCP server is a long-running process, so the embedding models, rerankers, Qdrant client, and index connections are kept loaded and reused across tool calls.
 
 ## Codex MCP Registration
 
-Register the MCP server with Codex:
+Register the MCP server with Codex using the promoted script:
 
 ```powershell
-codex mcp add icebot-rag -- "<path-to-IceBot-Tools>\.venv\Scripts\python.exe" "<path-to-IceBot-Tools>\rag\mcp_server.py"
+codex mcp add icebot-rag -- "<path-to-IceBot-Tools>\.venv\Scripts\python.exe" "<path-to-IceBot-Tools>\mcp\server.py"
 ```
 
 Example if the repository is under your user profile:
 
 ```powershell
 $toolsRoot = "$env:USERPROFILE\Projects\IceCream_arm_Robot\IceBot-Tools"
-codex mcp add icebot-rag -- "$toolsRoot\.venv\Scripts\python.exe" "$toolsRoot\rag\mcp_server.py"
+codex mcp add icebot-rag -- "$toolsRoot\.venv\Scripts\python.exe" "$toolsRoot\mcp\server.py"
 ```
 
 Verify:
@@ -151,6 +157,10 @@ The exposed tools are:
 retrieve_icebot_context
 retrieve_icebot_docs
 retrieve_icebot_code
+lookup_icebot_symbol
+lookup_icebot_endpoint
+lookup_icebot_handler
+verify_icebot_code_index
 ```
 
 The tools return context chunks with metadata such as source path, authority, status, retrieval scores, and code symbol/line metadata when available.

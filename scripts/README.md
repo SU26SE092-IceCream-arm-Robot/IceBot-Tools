@@ -116,8 +116,9 @@ pip install -r requirements.txt
 - `context_rag`
   - Run `IceBot-Tools/rag/commands/context.py` for Codex IDE/CLI context without calling OpenAI directly.
 
-- `start_rag_mcp`
-  - Run `IceBot-Tools/rag/mcp_server.py` as a long-running MCP server for IDE/tool integration.
+- `start_icebot_mcp`
+  - Run `IceBot-Tools/mcp/server.py` as a long-running MCP server for IDE/tool integration.
+  - The MCP server exposes both RAG retrieval and Code Intelligence lookup tools.
   - Full Codex MCP setup is documented in `IceBot-Tools/rag/docs/SETUP.md`.
 
 - `search_rag`
@@ -133,7 +134,7 @@ pip install -r requirements.txt
     - `python -m py_compile IceBot-Tools/rag/commands/context.py`
     - `python -m py_compile IceBot-Tools/rag/commands/search.py`
     - `python -m py_compile IceBot-Tools/rag/commands/ask.py`
-    - `python -m py_compile IceBot-Tools/rag/mcp_server.py`
+    - `python -m py_compile IceBot-Tools/mcp/server.py`
 
 ## Naming Rules
 

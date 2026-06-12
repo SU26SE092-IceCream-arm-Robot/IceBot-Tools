@@ -3,9 +3,10 @@ import sqlite3
 import re
 from pathlib import Path
 
-# Add project root to path to allow importing codeintel
+# Add project root to path to allow importing codeintel and toolcore
 project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
+sys.path.append(str(project_root.parent))
 
 from codeintel.config import load_sources_config, DB_PATH
 from codeintel.source_loader import scan_source_files

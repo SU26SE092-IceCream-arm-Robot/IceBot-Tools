@@ -2,9 +2,10 @@ import sys
 import json
 from pathlib import Path
 
-# Add project root to path to allow importing codeintel
+# Add project root to path to allow importing codeintel and toolcore
 project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
+sys.path.append(str(project_root.parent))
 
 from codeintel.config import EXPORT_DIR, ensure_directories
 from codeintel.queries import get_all_symbols, get_all_endpoints, get_all_relationships

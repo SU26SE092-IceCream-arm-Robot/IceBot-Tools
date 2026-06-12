@@ -6,6 +6,7 @@ from pathlib import Path
 from openai import OpenAI
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
+sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from raglib.config import (
     DEFAULT_LLM_MODEL,

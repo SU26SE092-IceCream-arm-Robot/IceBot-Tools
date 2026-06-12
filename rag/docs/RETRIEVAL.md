@@ -81,14 +81,14 @@ RAG_MAX_RETRIEVAL_LIMIT=10
 RAG_MAX_CANDIDATE_LIMIT=100
 ```
 
-These caps apply in `raglib/vector_store.py`, so they cover `context.py`, `search.py`, `ask.py`, and `mcp_server.py`.
+These caps apply in `raglib/vector_store.py`, so they cover `context.py`, `search.py`, `ask.py`, and `mcp/server.py`.
 
 ## Command Roles
 
 - `commands/context.py` is for retrieving context for Codex IDE/CLI without a separate `OPENAI_API_KEY`.
 - `commands/search.py` is for inspecting retrieved chunks and metadata.
 - `commands/ask.py` is for generating an answer from retrieved chunks through OpenAI.
-- `mcp_server.py` is long-running and reuses embedding/reranker models as process-level singletons.
+- `mcp/server.py` is long-running and reuses embedding/reranker models as process-level singletons.
 - Use `--lane docs` for accepted docs and `--lane code` for source code.
 - Retrieval outputs include `section_index` and `section_path` from Markdown header-aware chunking when available.
 - Retrieval outputs include `source_group`, `doc_type`, and `is_overview` after the collection is re-ingested with the current metadata schema.
@@ -97,13 +97,15 @@ These caps apply in `raglib/vector_store.py`, so they cover `context.py`, `searc
 
 ## MCP Tools
 
-The MCP server exposes:
+The unified MCP server in `mcp/server.py` exposes:
 
 - `retrieve_icebot_docs`: preferred for architecture, contracts, rules, flows, and business meaning.
 - `retrieve_icebot_code`: preferred for implementation, classes, endpoint wiring, and mapping details.
 - `retrieve_icebot_context`: router-level tool with `mode=docs|code|both`; default is `docs`.
+- `lookup_icebot_symbol`, `lookup_icebot_endpoint`, `lookup_icebot_handler`: exact structural index lookups.
+- `verify_icebot_code_index`: code index coverage validation.
 
-Prefer docs first. Use code when the question asks where or how something is implemented.
+Prefer docs first. Use code when the question asks where or how something is implemented. Use exact lookup tools for direct symbol, endpoint, or handler inquiries.
 MCP tools accept `use_hybrid=true|false`. Keep hybrid enabled for exact keyword and code lookup unless local measurement says otherwise.
 
 ## Cross-check Workflow

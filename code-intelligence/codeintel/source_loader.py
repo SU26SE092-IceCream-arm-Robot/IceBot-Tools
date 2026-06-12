@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from codeintel.ignore_rules import FileFilter
+from toolcore.ignore_rules import FileFilter
 from codeintel.file_hashing import generate_file_id, compute_file_hash
 
 def infer_project_key(relative_path: str) -> str:
