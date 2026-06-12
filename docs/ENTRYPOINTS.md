@@ -60,6 +60,22 @@ codex mcp add icebot-rag -- "<path-to-IceBot-Tools>\.venv\Scripts\python.exe" "<
 
 MCP exposes both semantic RAG tools and Code Intelligence lookup tools.
 
+## Docs Ops
+
+```powershell
+python .\docs-ops\commands\check_links.py
+python .\docs-ops\commands\check_doc_index.py
+python .\docs-ops\commands\find_stale_refs.py
+```
+
+Use Docs Ops after moving, deleting, or splitting documentation.
+
+MCP tool:
+
+```text
+check_icebot_docs
+```
+
 ## Log Analyzer
 
 ```powershell

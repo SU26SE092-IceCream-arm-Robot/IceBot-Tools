@@ -2,6 +2,8 @@
 
 This file replaces per-folder README files for local tools. Keep detailed operational commands here or in the dedicated tool docs under each folder's `docs/` directory.
 
+Tools should reduce context load. Do not make agents read tool docs before using a tool when the MCP description or command name is enough.
+
 ## Boundaries
 
 | Tool | Boundary |
@@ -10,6 +12,7 @@ This file replaces per-folder README files for local tools. Keep detailed operat
 | `mcp/` | Unified MCP adapter over RAG and Code Intelligence. |
 | `rag/` | Semantic retrieval over docs/code chunks using Qdrant, dense embeddings, sparse/BM25, and optional reranking. |
 | `code-intelligence/` | Exact structural index for symbols, endpoints, handlers, stores, DI, and relationships. |
+| `docs-ops/` | Markdown link, doc index, and stale-reference checks. |
 | `log-analyzer/` | Local log grouping and diagnostic checks. Not production monitoring. |
 | `pdf/` | PDF extraction workflow for paper/source review. |
 | `scripts/` | Small helper scripts for repeatable local operations. |
@@ -39,6 +42,16 @@ Read:
 
 Use Code Intelligence for exact structural lookup before semantic code retrieval.
 
+## Docs Ops
+
+Read:
+
+- `docs-ops/docs/USAGE.md`
+
+Use Docs Ops after moving, deleting, or splitting docs. It reports broken links, stale references, and important index/router doc problems.
+
+MCP exposes this as `check_icebot_docs`. The MCP response is quiet on success and returns structured failures only when something needs action.
+
 ## MCP
 
 Entrypoint:
@@ -56,6 +69,15 @@ MCP tools:
 - `lookup_icebot_endpoint`
 - `lookup_icebot_handler`
 - `verify_icebot_code_index`
+- `check_icebot_docs`
+
+### MCP Response Rule
+
+MCP tools should be quiet on success and verbose on failure.
+
+On success, return only a compact status and one-line summary. On failure, return structured, actionable failures with a sensible maximum count.
+
+This keeps successful checks from polluting agent context while still giving enough evidence to fix real issues.
 
 ## Log Analyzer
 

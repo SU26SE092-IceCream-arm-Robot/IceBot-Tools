@@ -12,6 +12,7 @@ This repository is not project source of truth and is not the future public harn
 - RAG setup: [rag/docs/SETUP.md](rag/docs/SETUP.md)
 - Code Intelligence design: [code-intelligence/docs/CODE_INTELLIGENCE_SYSTEM.md](code-intelligence/docs/CODE_INTELLIGENCE_SYSTEM.md)
 - Code Intelligence commands: [code-intelligence/docs/USAGE.md](code-intelligence/docs/USAGE.md)
+- Docs Ops commands: [docs-ops/docs/USAGE.md](docs-ops/docs/USAGE.md)
 - Log Analyzer commands: [log-analyzer/docs/USAGE.md](log-analyzer/docs/USAGE.md)
 - PDF workflow: [pdf/docs/PDF_WORKFLOW.md](pdf/docs/PDF_WORKFLOW.md)
 
@@ -23,6 +24,7 @@ This repository is not project source of truth and is not the future public harn
 | `mcp/` | Unified MCP server over RAG and Code Intelligence. |
 | `rag/` | Semantic retrieval, indexing, and context routing. |
 | `code-intelligence/` | Structural code index and exact lookups. |
+| `docs-ops/` | Markdown link, doc index, and stale-reference checks. |
 | `log-analyzer/` | Local log grouping and diagnostic checks. |
 | `pdf/` | PDF extraction and paper/source review workflow. |
 | `docker/` | Docker Compose files for local tooling services. |

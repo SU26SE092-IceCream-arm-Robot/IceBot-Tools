@@ -10,7 +10,7 @@ if str(mcp_dir) not in sys.path:
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from tools import rag_tools, code_intelligence_tools
+from tools import rag_tools, code_intelligence_tools, docs_ops_tools
 
 # Initialize Unified FastMCP Server
 mcp = FastMCP("icebot")
@@ -127,6 +127,13 @@ def lookup_icebot_handler(query: str, context: str or None = None) -> dict:
 def verify_icebot_code_index(dry_run: bool = True) -> dict:
     """Verify code index coverage against physical files on disk. Optionally runs a dry indexing run to verify updates."""
     return code_intelligence_tools.verify_icebot_code_index(dry_run)
+
+# --- Register Docs Ops Tools ---
+
+@mcp.tool()
+def check_icebot_docs(max_failures_per_check: int = 30) -> dict:
+    """Run docs hygiene checks. Quiet on success, structured failures on broken links, stale refs, or missing index docs."""
+    return docs_ops_tools.check_icebot_docs(max_failures_per_check=max_failures_per_check)
 
 def main():
     """Starts the FastMCP server."""
