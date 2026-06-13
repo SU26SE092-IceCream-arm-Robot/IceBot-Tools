@@ -10,7 +10,7 @@ if str(mcp_dir) not in sys.path:
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from tools import rag_tools, code_intelligence_tools, docs_ops_tools, log_analyzer_tools
+from tools import rag_tools, code_intelligence_tools, docs_ops_tools, log_analyzer_tools, backend_preflight_tools
 
 # Initialize Unified FastMCP Server
 mcp = FastMCP("icebot")
@@ -152,6 +152,29 @@ def analyze_icebot_logs(
         rag_path=rag_path,
         include_rag=include_rag,
         max_items=max_items,
+    )
+
+# --- Register Backend Preflight Tools ---
+
+@mcp.tool()
+def check_icebot_backend(
+    include_build: bool = True,
+    include_docs: bool = True,
+    include_code_index: bool = True,
+    include_logs: bool = False,
+    code_index_dry_run: bool = True,
+    max_failures_per_check: int = 20,
+    max_log_items: int = 5,
+) -> dict:
+    """Run backend preflight checks. Quiet on success, structured failures on build/docs/code-index/log issues."""
+    return backend_preflight_tools.check_icebot_backend(
+        include_build=include_build,
+        include_docs=include_docs,
+        include_code_index=include_code_index,
+        include_logs=include_logs,
+        code_index_dry_run=code_index_dry_run,
+        max_failures_per_check=max_failures_per_check,
+        max_log_items=max_log_items,
     )
 
 def main():

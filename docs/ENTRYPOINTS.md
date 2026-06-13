@@ -82,6 +82,30 @@ MCP tool:
 check_icebot_docs
 ```
 
+## Backend Preflight
+
+Run the final backend readiness wrapper:
+
+```powershell
+python .\backend-preflight\commands\check_backend.py
+```
+
+Use this at the end of backend code/API/domain tasks. Use narrower tools during investigation.
+
+Skip expensive or irrelevant checks when needed:
+
+```powershell
+python .\backend-preflight\commands\check_backend.py --skip-build
+python .\backend-preflight\commands\check_backend.py --skip-code-index
+python .\backend-preflight\commands\check_backend.py --include-logs
+```
+
+MCP tool:
+
+```text
+check_icebot_backend
+```
+
 ## Log Analyzer
 
 ```powershell

@@ -14,6 +14,7 @@ Tools should reduce context load. Do not make agents read tool docs before using
 | `code-intelligence/` | Exact structural index for symbols, endpoints, handlers, stores, DI, and relationships. |
 | `docs-ops/` | Markdown link, doc index, and stale-reference checks. |
 | `log-analyzer/` | Local log grouping and diagnostic checks. Not production monitoring. |
+| `backend-preflight/` | Thin wrapper for backend build, docs checks, Code Intelligence coverage, and optional log checks. |
 | `pdf/` | PDF extraction workflow for paper/source review. |
 | `scripts/` | Small helper scripts for repeatable local operations. |
 | `infrastructure/` | Public-safe templates for local machine/runtime notes. |
@@ -71,6 +72,7 @@ MCP tools:
 - `verify_icebot_code_index`
 - `check_icebot_docs`
 - `analyze_icebot_logs`
+- `check_icebot_backend`
 
 ### MCP Response Rule
 
@@ -95,6 +97,40 @@ Current checks include:
 - repeated exception grouping.
 
 It is local tooling, not production monitoring.
+
+## Backend Preflight
+
+Backend preflight is a thin wrapper over existing checks. It does not replace focused tools; use it when you need one final backend readiness check.
+
+Priority rule:
+
+- use focused lookup/RAG/check tools while working;
+- use `check_icebot_backend` only at the end of a meaningful backend task;
+- do not read preflight internals unless changing or debugging the tool.
+
+Command:
+
+```powershell
+python .\backend-preflight\commands\check_backend.py
+```
+
+MCP tool:
+
+```text
+check_icebot_backend
+```
+
+Default checks:
+
+- `dotnet build` for `IceBot-Backend/src/IceBot.slnx`;
+- Docs Ops aggregate check;
+- Code Intelligence dry run + coverage check.
+
+Log analyzer is optional because old/local logs can be noisy:
+
+```powershell
+python .\backend-preflight\commands\check_backend.py --include-logs
+```
 
 ## Scripts
 
