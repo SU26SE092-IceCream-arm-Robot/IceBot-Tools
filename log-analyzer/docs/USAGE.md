@@ -39,7 +39,20 @@ Short smoke test:
 
 ```powershell
 .\.venv\Scripts\python.exe .\log-analyzer\generate_mock_logs.py --count 5
+.\.venv\Scripts\python.exe .\log-analyzer\analyzer.py --once --skip-rag --max-items 5
 ```
+
+`--once` processes current log files from the beginning, prints a summary, and exits. Use it for tests and agent verification. Without `--once`, the analyzer runs as a long-lived watcher.
+
+Use `--skip-rag` for routine smoke tests because old RAG ingest logs can contain many historical slow-embedding warnings.
+
+MCP exposes a capped one-shot tool:
+
+```text
+analyze_icebot_logs
+```
+
+By default, the MCP tool excludes RAG logs and returns only a compact success summary or capped structured issues.
 
 ## Run Against Real Logs
 

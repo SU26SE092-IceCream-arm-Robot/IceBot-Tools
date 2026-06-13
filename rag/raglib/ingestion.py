@@ -44,7 +44,7 @@ class BaseIngester(ABC):
         self.logger = logger
         self.model = SentenceTransformer(EMBEDDING_MODEL, trust_remote_code=True)
         self.sparse_model = self.load_sparse_model() if ENABLE_HYBRID else None
-        self.client = get_qdrant_client()
+        self.client = get_qdrant_client(logger=self.logger)
         self.embedding_dimension = len(self.model.encode("dimension probe"))
         self._points: list[PointStruct] = []
 

@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from pathlib import Path
 
 from docsops.config import DEFAULT_DOC_ROOTS, IMPORTANT_DOC_PATHS, STALE_REFERENCE_PATTERNS

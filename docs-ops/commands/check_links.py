@@ -1,12 +1,12 @@
 import sys
 from pathlib import Path
 
-project_root = Path(__file__).resolve().parents[2]
-sys.path.append(str(project_root))
-sys.path.append(str(project_root.parent))
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+from _bootstrap import bootstrap_imports
+
+bootstrap_imports()
 
 import argparse
+from docsops.reporting import format_check_failure
 from docsops.checks import check_markdown_links
 
 
@@ -23,8 +23,8 @@ def main() -> None:
         return
 
     print(f"Markdown link check failed: {result['failure_count']} broken link(s).", file=sys.stderr)
-    for item in result["failures"]:
-        print(f"- {item['file']}:{item['line']} -> {item['target']} ({item['reason']})", file=sys.stderr)
+    for line in format_check_failure(result)[1:]:
+        print(line, file=sys.stderr)
 
     sys.exit(1)
 

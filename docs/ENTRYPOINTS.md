@@ -63,6 +63,12 @@ MCP exposes both semantic RAG tools and Code Intelligence lookup tools.
 ## Docs Ops
 
 ```powershell
+python .\docs-ops\commands\check_docs.py
+```
+
+Individual checks:
+
+```powershell
 python .\docs-ops\commands\check_links.py
 python .\docs-ops\commands\check_doc_index.py
 python .\docs-ops\commands\find_stale_refs.py
@@ -94,6 +100,12 @@ For real logs:
 ```
 
 See `log-analyzer/docs/USAGE.md`.
+
+MCP tool:
+
+```text
+analyze_icebot_logs
+```
 
 ## Scripts
 

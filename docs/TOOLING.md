@@ -70,6 +70,7 @@ MCP tools:
 - `lookup_icebot_handler`
 - `verify_icebot_code_index`
 - `check_icebot_docs`
+- `analyze_icebot_logs`
 
 ### MCP Response Rule
 
@@ -84,6 +85,8 @@ This keeps successful checks from polluting agent context while still giving eno
 The log analyzer watches WebAPI and robot-style logs, groups repeated errors, and reports simple runtime/design violations.
 
 Detailed commands live in `log-analyzer/docs/USAGE.md`.
+
+MCP exposes this as `analyze_icebot_logs`. It runs once, returns capped structured output, and excludes RAG logs by default to avoid old ingest noise.
 
 Current checks include:
 

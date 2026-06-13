@@ -9,6 +9,12 @@ It does not rewrite documents, call an LLM, or run RAG ingest. It only reports i
 Run from `IceBot-Tools`.
 
 ```powershell
+python .\docs-ops\commands\check_docs.py
+```
+
+Run individual checks only when debugging:
+
+```powershell
 python .\docs-ops\commands\check_links.py
 python .\docs-ops\commands\check_doc_index.py
 python .\docs-ops\commands\find_stale_refs.py
@@ -26,6 +32,7 @@ The MCP tool is quiet on success and structured on failure.
 
 | Command | Purpose |
 | --- | --- |
+| `check_docs.py` | Runs all docs hygiene checks in one command. |
 | `check_links.py` | Scans Markdown files and reports local links pointing to missing files/folders. |
 | `check_doc_index.py` | Verifies important index/router docs exist and their links resolve. |
 | `find_stale_refs.py` | Finds references to known old paths such as deleted README files or moved docs. |
@@ -78,9 +85,7 @@ Do not duplicate the full config list in Markdown. This page explains when to ch
 After changing the config, run:
 
 ```powershell
-python .\docs-ops\commands\check_links.py
-python .\docs-ops\commands\check_doc_index.py
-python .\docs-ops\commands\find_stale_refs.py
+python .\docs-ops\commands\check_docs.py
 ```
 
 ## Boundary

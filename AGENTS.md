@@ -24,6 +24,7 @@ Do not read `README.md`, `docs/TOOLING.md`, or per-tool docs just to use a tool 
 | Exact REST endpoint lookup | `lookup_icebot_endpoint` |
 | Exact CQRS handler lookup | `lookup_icebot_handler` |
 | Docs link/stale-reference verification | `check_icebot_docs` |
+| One-shot capped log diagnostics | `analyze_icebot_logs` |
 | Code index health | `verify_icebot_code_index` |
 
 Prefer exact lookup tools before semantic retrieval when the query contains a concrete symbol, endpoint, handler, or file name.
@@ -66,9 +67,7 @@ Do not dump successful check output into agent context.
 Docs-only change:
 
 ```powershell
-python .\docs-ops\commands\check_links.py
-python .\docs-ops\commands\check_doc_index.py
-python .\docs-ops\commands\find_stale_refs.py
+python .\docs-ops\commands\check_docs.py
 ```
 
 Python tooling change:

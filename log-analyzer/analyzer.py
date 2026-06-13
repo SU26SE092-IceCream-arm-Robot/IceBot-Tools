@@ -16,10 +16,21 @@ DEFAULT_RAG_LOG_ROOT = TOOL_DIR.parent / "logs" / "rag"
 DEFAULT_VIOLATIONS_LOG_PATH = TOOL_DIR.parent / "logs" / "log-analyzer" / "violations.log"
 
 class LogAnalyzer:
-    def __init__(self, webapi_dir, robot_dir, rag_dir, violations_log_path):
+    def __init__(
+        self,
+        webapi_dir,
+        robot_dir,
+        rag_dir,
+        violations_log_path,
+        *,
+        write_violations=True,
+        verbose=True,
+    ):
         self.webapi_dir = os.path.abspath(webapi_dir)
         self.robot_dir = os.path.abspath(robot_dir)
         self.rag_dir = os.path.abspath(rag_dir)
+        self.write_violations = write_violations
+        self.verbose = verbose
         
         # State for files being tailed
         self.webapi_file = None
@@ -47,7 +58,8 @@ class LogAnalyzer:
         
         # File to write violation alarms
         self.violations_log_path = os.path.abspath(violations_log_path)
-        os.makedirs(os.path.dirname(self.violations_log_path), exist_ok=True)
+        if self.write_violations:
+            os.makedirs(os.path.dirname(self.violations_log_path), exist_ok=True)
 
     def log_violation(self, source, category, message, timestamp=None):
         ts = timestamp or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -62,9 +74,9 @@ class LogAnalyzer:
         if len(self.violations) > 50:
             self.violations.pop(0)
             
-        # Write to log file
-        with open(self.violations_log_path, "a", encoding="utf-8") as f:
-            f.write(alarm_text + "\n")
+        if self.write_violations:
+            with open(self.violations_log_path, "a", encoding="utf-8") as f:
+                f.write(alarm_text + "\n")
 
     def get_latest_file(self, directory, pattern):
         if not os.path.exists(directory):
@@ -75,7 +87,7 @@ class LogAnalyzer:
         # Return the newest modified file
         return max(files, key=os.path.getmtime)
 
-    def update_tail_file(self, directory, pattern, current_file, current_fp):
+    def update_tail_file(self, directory, pattern, current_file, current_fp, *, seek_to_end=True):
         latest_file = self.get_latest_file(directory, pattern)
         if not latest_file:
             return None, None
@@ -83,10 +95,12 @@ class LogAnalyzer:
         if latest_file != current_file:
             if current_fp:
                 current_fp.close()
-            print(f"[*] Switching log file in {os.path.basename(directory)} to: {os.path.basename(latest_file)}")
+            if self.verbose:
+                print(f"[*] Switching log file in {os.path.basename(directory)} to: {os.path.basename(latest_file)}")
             fp = open(latest_file, "r", encoding="utf-8", errors="ignore")
-            # Seek to end of file on initial open to behave like tail -f
-            fp.seek(0, os.SEEK_END)
+            if seek_to_end:
+                # Seek to end of file on initial open to behave like tail -f.
+                fp.seek(0, os.SEEK_END)
             return latest_file, fp
             
         # Check if file was truncated/recreated
@@ -95,7 +109,8 @@ class LogAnalyzer:
                 curr_pos = current_fp.tell()
                 file_size = os.path.getsize(current_file)
                 if file_size < curr_pos:
-                    print(f"[*] Log file truncated: {os.path.basename(current_file)}")
+                    if self.verbose:
+                        print(f"[*] Log file truncated: {os.path.basename(current_file)}")
                     current_fp.seek(0)
             except Exception:
                 pass
@@ -373,6 +388,122 @@ class LogAnalyzer:
         print("\n" + "=" * 100)
         print("Press Ctrl+C to exit. Analyzing logs in real-time...")
 
+    def build_summary(self, *, max_items=10):
+        sorted_errors = sorted(self.errors.values(), key=lambda x: x["count"], reverse=True)
+        violations = self.violations[-max_items:]
+        errors = sorted_errors[:max_items]
+
+        issue_count = len(self.violations) + len(self.errors)
+        if issue_count == 0:
+            return {
+                "passed": True,
+                "summary": "Log analyzer found no violations or error groups.",
+            }
+
+        return {
+            "passed": False,
+            "summary": (
+                f"Log analyzer found {len(self.violations)} violation(s) "
+                f"and {len(self.errors)} error group(s)."
+            ),
+            "violation_count": len(self.violations),
+            "error_group_count": len(self.errors),
+            "truncated": len(self.violations) > len(violations) or len(self.errors) > len(errors),
+            "violations": [
+                {
+                    "timestamp": item["timestamp"],
+                    "source": item["source"],
+                    "category": item["category"],
+                    "message": item["message"],
+                }
+                for item in violations
+            ],
+            "errors": [
+                {
+                    "source": item["source"],
+                    "count": item["count"],
+                    "type": item["type"],
+                    "message": item["message"],
+                    "first_seen": item["first_seen"],
+                    "last_seen": item["last_seen"],
+                }
+                for item in errors
+            ],
+        }
+
+    def print_once_summary(self, *, max_items=10):
+        summary = self.build_summary(max_items=max_items)
+        print("LOG ANALYZER ONE-SHOT SUMMARY")
+        print(f"Violations: {summary.get('violation_count', 0)}")
+        print(f"Error groups: {summary.get('error_group_count', 0)}")
+
+        if summary.get("violations"):
+            print("\nViolations:")
+            for violation in summary["violations"]:
+                print(
+                    f"- [{violation['source']}] [{violation['category']}] {violation['message']}"
+                )
+
+        if summary.get("errors"):
+            print("\nErrors:")
+            for error in summary["errors"]:
+                print(
+                    f"- [{error['source']}] count={error['count']} type={error['type']} message={error['message']}"
+                )
+
+    def analyze_once(self, *, include_rag=True, max_items=10):
+        self.webapi_file, self.webapi_fp = self.update_tail_file(
+            self.webapi_dir,
+            r"^log-\d{8}\.txt$",
+            self.webapi_file,
+            self.webapi_fp,
+            seek_to_end=False,
+        )
+        self.robot_file, self.robot_fp = self.update_tail_file(
+            self.robot_dir,
+            r"^robot-.*\.log$",
+            self.robot_file,
+            self.robot_fp,
+            seek_to_end=False,
+        )
+        if include_rag:
+            self.rag_file, self.rag_fp = self.update_tail_file(
+                self.rag_dir,
+                r"^ingest\.log$",
+                self.rag_file,
+                self.rag_fp,
+                seek_to_end=False,
+            )
+
+        if self.webapi_fp:
+            for line in self.webapi_fp.readlines():
+                self.process_webapi_line(line)
+
+        if self.robot_fp:
+            self.process_robot_lines()
+
+        if include_rag and self.rag_fp:
+            self.process_rag_lines()
+
+        summary = self.build_summary(max_items=max_items)
+        self.close_files()
+        return summary
+
+    def run_once(self, *, include_rag=True, max_items=10):
+        self.analyze_once(include_rag=include_rag, max_items=max_items)
+        self.print_once_summary(max_items=max_items)
+
+    def close_files(self):
+        if self.webapi_fp:
+            self.webapi_fp.close()
+            self.webapi_fp = None
+        if self.robot_fp:
+            self.robot_fp.close()
+            self.robot_fp = None
+        if self.rag_fp:
+            self.rag_fp.close()
+            self.rag_fp = None
+
     def run(self):
         print("[*] Log Analyzer started. Waiting for files...")
         
@@ -413,12 +544,7 @@ class LogAnalyzer:
                 
         except KeyboardInterrupt:
             print("\n[*] Exiting Log Analyzer.")
-            if self.webapi_fp:
-                self.webapi_fp.close()
-            if self.robot_fp:
-                self.robot_fp.close()
-            if self.rag_fp:
-                self.rag_fp.close()
+            self.close_files()
 
 if __name__ == "__main__":
     import argparse
@@ -431,6 +557,22 @@ if __name__ == "__main__":
         "--violations-log-path",
         default=str(DEFAULT_VIOLATIONS_LOG_PATH),
         help="Path to write detected design violations",
+    )
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Process current log files once from the beginning, print a summary, and exit.",
+    )
+    parser.add_argument(
+        "--skip-rag",
+        action="store_true",
+        help="Do not include RAG ingest logs in one-shot analysis.",
+    )
+    parser.add_argument(
+        "--max-items",
+        type=int,
+        default=10,
+        help="Maximum violations/errors to print in one-shot mode.",
     )
     
     args = parser.parse_args()
@@ -447,4 +589,7 @@ if __name__ == "__main__":
     os.makedirs(rag_path, exist_ok=True)
     
     analyzer = LogAnalyzer(webapi_path, robot_path, rag_path, violations_log_path)
-    analyzer.run()
+    if args.once:
+        analyzer.run_once(include_rag=not args.skip_rag, max_items=args.max_items)
+    else:
+        analyzer.run()

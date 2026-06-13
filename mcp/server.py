@@ -10,7 +10,7 @@ if str(mcp_dir) not in sys.path:
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from tools import rag_tools, code_intelligence_tools, docs_ops_tools
+from tools import rag_tools, code_intelligence_tools, docs_ops_tools, log_analyzer_tools
 
 # Initialize Unified FastMCP Server
 mcp = FastMCP("icebot")
@@ -134,6 +134,25 @@ def verify_icebot_code_index(dry_run: bool = True) -> dict:
 def check_icebot_docs(max_failures_per_check: int = 30) -> dict:
     """Run docs hygiene checks. Quiet on success, structured failures on broken links, stale refs, or missing index docs."""
     return docs_ops_tools.check_icebot_docs(max_failures_per_check=max_failures_per_check)
+
+# --- Register Log Analyzer Tools ---
+
+@mcp.tool()
+def analyze_icebot_logs(
+    webapi_path: str | None = None,
+    robot_path: str | None = None,
+    rag_path: str | None = None,
+    include_rag: bool = False,
+    max_items: int = 5,
+) -> dict:
+    """Analyze IceBot logs once with capped output. Default excludes RAG logs to avoid old ingest noise."""
+    return log_analyzer_tools.analyze_icebot_logs(
+        webapi_path=webapi_path,
+        robot_path=robot_path,
+        rag_path=rag_path,
+        include_rag=include_rag,
+        max_items=max_items,
+    )
 
 def main():
     """Starts the FastMCP server."""

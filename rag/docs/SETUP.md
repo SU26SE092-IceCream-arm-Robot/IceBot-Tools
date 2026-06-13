@@ -174,3 +174,16 @@ The tools accept `use_hybrid=true|false`. Hybrid uses Qdrant dense+sparse retrie
 - Hybrid search requires the current named-vector schema.
 - Changing embedding model, embedding dimension, sparse model, or vector schema requires a new collection version and manual re-ingest.
 - Example: local testing can use `Qwen/Qwen3-Embedding-4B` with `RAG_DOCS_COLLECTION_VERSION=v2` while the previous `0.6B` collection remains separate.
+
+## AI Agent Gotchas & Troubleshooting
+
+### 1. Qdrant Local Mode Lock Concurrency (Locking)
+When running in local fallback mode (e.g., `QDRANT_URL=local` or when the Qdrant Docker server is stopped), the Qdrant Client uses local file locking (`portalocker`) on `data/qdrant_local/`.
+- **Constraint:** Only **one** Python process can access the local database at a time.
+- **Gotcha:** If the MCP server (`mcp/server.py`) is running in the background and has executed a RAG retrieval tool, it locks the database folder. Any subsequent command-line command (such as `search.py`, `ingest_docs.py`) will fail with `RuntimeError: Storage folder ... is already accessed by another instance of Qdrant client`.
+- **Solution:** Restart the MCP server process (e.g., restart IDE/Cursor extensions) to release the lock, or start the Docker Qdrant service (`http://localhost:6333`) which natively supports concurrent client access.
+
+### 2. Ingest Cache & Staged vs. Skipped Files
+During ingestion, files are hashed (`sha256`) and checked against existing points in the Qdrant collection using `is_file_unchanged()`.
+- **Gotcha:** When running ingestion, some files might be logged as `Staged changed file: ...` because they actually changed (or were modified recently). AI models must **not** immediately assume that the database is empty or that a full re-index of the whole database is occurring.
+- **Diagnosis:** Inspect the suffix of the log output. Unchanged files will be skipped instantly with `Skipped unchanged file: ...`.
