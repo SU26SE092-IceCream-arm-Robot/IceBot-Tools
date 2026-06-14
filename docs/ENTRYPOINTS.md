@@ -155,6 +155,29 @@ Expected image is currently:
 qdrant/qdrant:v1.18.1
 ```
 
+Start Aspire Dashboard for local observability:
+
+```powershell
+.\scripts\start_aspire_dashboard.ps1
+```
+
+The Aspire Dashboard service is under the Docker Compose `observability` profile, so it does not start when only Qdrant is started.
+
+Endpoints:
+
+```text
+UI:   http://localhost:18888
+OTLP: http://localhost:18889
+```
+
+Expected image is currently:
+
+```text
+mcr.microsoft.com/dotnet/aspire-dashboard:13
+```
+
+Aspire Dashboard in this repository is tooling/dev observability only. It is not production monitoring and not a backend runtime dependency.
+
 Capture a local CPU/RAM/GPU/process snapshot:
 
 ```powershell

@@ -18,6 +18,7 @@ Tools should reduce context load. Do not make agents read tool docs before using
 | `pdf/` | PDF extraction workflow for paper/source review. |
 | `scripts/` | Small helper scripts for repeatable local operations. |
 | `infrastructure/` | Public-safe templates for local machine/runtime notes. |
+| `docker/` | Local tooling services such as Qdrant and Aspire Dashboard. Not backend runtime infrastructure. |
 
 ## RAG
 
@@ -97,6 +98,35 @@ Current checks include:
 - repeated exception grouping.
 
 It is local tooling, not production monitoring.
+
+## Local Observability
+
+Aspire Dashboard is available from the tools Docker Compose file as a local/dev observability viewer.
+
+Boundary:
+
+- Aspire Dashboard in `IceBot-Tools` is tooling/dev observability.
+- It is not production monitoring.
+- It is not a backend runtime dependency.
+- The backend app should still run without cloning or starting `IceBot-Tools`.
+
+Start it only when you need local OpenTelemetry/Aspire debugging:
+
+```powershell
+.\scripts\start_aspire_dashboard.ps1
+```
+
+UI:
+
+```text
+http://localhost:18888
+```
+
+OTLP endpoint:
+
+```text
+http://localhost:18889
+```
 
 ## Backend Preflight
 

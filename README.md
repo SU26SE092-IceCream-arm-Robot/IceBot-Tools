@@ -1,6 +1,6 @@
 # IceBot-Tools
 
-Local tooling for IceBot development: RAG, MCP, Code Intelligence, diagnostics, PDF extraction, Docker helpers, and scripts.
+Local tooling for IceBot development: RAG, MCP, Code Intelligence, diagnostics, local observability, PDF extraction, Docker helpers, and scripts.
 
 This repository is not project source of truth and is not the future public harness. Project-facing simulator, smoke-test, or demo automation should live in a separate `IceBot-Harness` repository when needed.
 
@@ -27,7 +27,7 @@ This repository is not project source of truth and is not the future public harn
 | `docs-ops/` | Markdown link, doc index, and stale-reference checks. |
 | `log-analyzer/` | Local log grouping and diagnostic checks. |
 | `pdf/` | PDF extraction and paper/source review workflow. |
-| `docker/` | Docker Compose files for local tooling services. |
+| `docker/` | Docker Compose files for local tooling services such as Qdrant and Aspire Dashboard. |
 | `scripts/` | Helper scripts for local workflows. |
 | `infrastructure/` | Public-safe templates for local machine/runtime notes. |
 | `data/` | Generated local data. Ignored by git. |
