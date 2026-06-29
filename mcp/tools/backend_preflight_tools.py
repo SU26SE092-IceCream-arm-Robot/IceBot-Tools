@@ -13,6 +13,7 @@ from backendpreflight import run_backend_preflight
 
 def check_icebot_backend(
     include_build: bool = True,
+    include_tests: bool = True,
     include_docs: bool = True,
     include_code_index: bool = True,
     include_logs: bool = False,
@@ -23,6 +24,7 @@ def check_icebot_backend(
     """Run backend preflight checks with quiet success and structured failure output."""
     return run_backend_preflight(
         include_build=include_build,
+        include_tests=include_tests,
         include_docs=include_docs,
         include_code_index=include_code_index,
         include_logs=include_logs,

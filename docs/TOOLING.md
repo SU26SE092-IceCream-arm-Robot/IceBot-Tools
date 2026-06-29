@@ -152,7 +152,7 @@ check_icebot_backend
 
 Default checks:
 
-- `dotnet build` for `IceBot-Backend/src/IceBot.slnx`;
+- `dotnet build` and `dotnet test --no-build` for `IceBot-Backend/IceBot.slnx`;
 - Docs Ops aggregate check;
 - Code Intelligence dry run + coverage check.
 

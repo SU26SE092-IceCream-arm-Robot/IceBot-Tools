@@ -59,7 +59,23 @@ def _run_backend_build() -> dict[str, Any]:
 
     return _run_process(
         "backend_build",
-        ["dotnet", "build", "src\\IceBot.slnx"],
+        ["dotnet", "build", "IceBot.slnx"],
+        BACKEND_DIR,
+    )
+
+
+def _run_backend_tests() -> dict[str, Any]:
+    if not BACKEND_DIR.exists():
+        return {
+            "name": "backend_tests",
+            "passed": False,
+            "summary": "IceBot-Backend directory was not found.",
+            "path": str(BACKEND_DIR),
+        }
+
+    return _run_process(
+        "backend_tests",
+        ["dotnet", "test", "tests\\IceBot.UnitTests\\IceBot.UnitTests.csproj", "--no-build"],
         BACKEND_DIR,
     )
 
@@ -164,6 +180,7 @@ def _run_log_check(max_items: int) -> dict[str, Any]:
 def run_backend_preflight(
     *,
     include_build: bool = True,
+    include_tests: bool = True,
     include_docs: bool = True,
     include_code_index: bool = True,
     include_logs: bool = False,
@@ -175,6 +192,8 @@ def run_backend_preflight(
 
     if include_build:
         checks.append(_run_backend_build())
+    if include_tests:
+        checks.append(_run_backend_tests())
     if include_docs:
         checks.append(_run_docs_check(max_failures_per_check=max_failures_per_check))
     if include_code_index:

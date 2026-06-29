@@ -12,6 +12,7 @@ from backendpreflight import run_backend_preflight
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run IceBot backend preflight checks.")
     parser.add_argument("--skip-build", action="store_true", help="Skip dotnet build.")
+    parser.add_argument("--skip-tests", action="store_true", help="Skip dotnet unit tests.")
     parser.add_argument("--skip-docs", action="store_true", help="Skip docs hygiene checks.")
     parser.add_argument("--skip-code-index", action="store_true", help="Skip Code Intelligence coverage checks.")
     parser.add_argument("--include-logs", action="store_true", help="Include one-shot log analyzer check.")
@@ -22,6 +23,7 @@ def main() -> None:
 
     result = run_backend_preflight(
         include_build=not args.skip_build,
+        include_tests=not args.skip_tests,
         include_docs=not args.skip_docs,
         include_code_index=not args.skip_code_index,
         include_logs=args.include_logs,
