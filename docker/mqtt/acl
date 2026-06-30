@@ -1,0 +1,6 @@
+# Cloud backend may wake any provisioned execution endpoint.
+user icebot-backend
+topic write icebot/execution-endpoints/+/commands/available
+
+# Local Edge username must equal its executionEndpointId UUID.
+pattern read icebot/execution-endpoints/%u/commands/available

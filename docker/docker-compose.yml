@@ -19,3 +19,43 @@ services:
     environment:
       ASPNETCORE_URLS: http://+:18888
       DOTNET_DASHBOARD_OTLP_ENDPOINT_URL: http://+:18889
+
+  mqtt-init:
+    image: eclipse-mosquitto:2.0.20
+    profiles:
+      - mqtt
+    environment:
+      MQTT_BACKEND_PASSWORD: ${MQTT_BACKEND_PASSWORD:-icebot-local-backend}
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        cp /mqtt-bootstrap/mosquitto.conf /mosquitto/config/mosquitto.conf &&
+        cp /mqtt-bootstrap/acl /mosquitto/config/acl &&
+        touch /mosquitto/data/password_file &&
+        mosquitto_passwd -b /mosquitto/data/password_file icebot-backend "$${MQTT_BACKEND_PASSWORD}" &&
+        chmod 0600 /mosquitto/config/mosquitto.conf /mosquitto/config/acl /mosquitto/data/password_file
+    volumes:
+      - mqtt-data:/mosquitto/data
+      - mqtt-config:/mosquitto/config
+      - ./mqtt/mosquitto.conf:/mqtt-bootstrap/mosquitto.conf:ro
+      - ./mqtt/acl:/mqtt-bootstrap/acl:ro
+    restart: "no"
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0.20
+    container_name: IceBot-tools-mosquitto
+    profiles:
+      - mqtt
+    depends_on:
+      mqtt-init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:1883:1883"
+    volumes:
+      - mqtt-config:/mosquitto/config
+      - mqtt-data:/mosquitto/data
+
+volumes:
+  mqtt-config:
+  mqtt-data:
