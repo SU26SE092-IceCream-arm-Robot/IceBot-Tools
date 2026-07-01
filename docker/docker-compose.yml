@@ -26,20 +26,21 @@ services:
       - mqtt
     environment:
       MQTT_BACKEND_PASSWORD: ${MQTT_BACKEND_PASSWORD:-icebot-local-backend}
+      MQTT_DYNSEC_ADMIN_PASSWORD: ${MQTT_DYNSEC_ADMIN_PASSWORD:-icebot-local-dynsec-admin}
     command:
       - /bin/sh
       - -c
       - >-
         cp /mqtt-bootstrap/mosquitto.conf /mosquitto/config/mosquitto.conf &&
-        cp /mqtt-bootstrap/acl /mosquitto/config/acl &&
-        touch /mosquitto/data/password_file &&
-        mosquitto_passwd -b /mosquitto/data/password_file icebot-backend "$${MQTT_BACKEND_PASSWORD}" &&
-        chmod 0600 /mosquitto/config/mosquitto.conf /mosquitto/config/acl /mosquitto/data/password_file
+        if [ ! -s /mosquitto/data/dynamic-security.json ]; then
+          printf '%s\n%s\n' "$${MQTT_DYNSEC_ADMIN_PASSWORD}" "$${MQTT_DYNSEC_ADMIN_PASSWORD}" |
+          mosquitto_ctrl dynsec init /mosquitto/data/dynamic-security.json icebot-dynsec-admin;
+        fi &&
+        chmod 0600 /mosquitto/config/mosquitto.conf /mosquitto/data/dynamic-security.json
     volumes:
       - mqtt-data:/mosquitto/data
       - mqtt-config:/mosquitto/config
       - ./mqtt/mosquitto.conf:/mqtt-bootstrap/mosquitto.conf:ro
-      - ./mqtt/acl:/mqtt-bootstrap/acl:ro
     restart: "no"
 
   mosquitto:
@@ -55,6 +56,30 @@ services:
     volumes:
       - mqtt-config:/mosquitto/config
       - mqtt-data:/mosquitto/data
+
+  mqtt-bootstrap:
+    image: eclipse-mosquitto:2.0.20
+    profiles:
+      - mqtt
+    depends_on:
+      - mosquitto
+    environment:
+      MQTT_BACKEND_PASSWORD: ${MQTT_BACKEND_PASSWORD:-icebot-local-backend}
+      MQTT_DYNSEC_ADMIN_PASSWORD: ${MQTT_DYNSEC_ADMIN_PASSWORD:-icebot-local-dynsec-admin}
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        sleep 2;
+        mosquitto_ctrl -h mosquitto -u icebot-dynsec-admin -P "$${MQTT_DYNSEC_ADMIN_PASSWORD}" dynsec createRole icebot-endpoint-subscriber >/dev/null 2>&1 || true;
+        mosquitto_ctrl -h mosquitto -u icebot-dynsec-admin -P "$${MQTT_DYNSEC_ADMIN_PASSWORD}" dynsec addRoleACL icebot-endpoint-subscriber subscribePattern 'icebot/execution-endpoints/%u/commands/available' allow >/dev/null 2>&1 || true;
+        mosquitto_ctrl -h mosquitto -u icebot-dynsec-admin -P "$${MQTT_DYNSEC_ADMIN_PASSWORD}" dynsec addRoleACL icebot-endpoint-subscriber publishClientReceive 'icebot/execution-endpoints/%u/commands/available' allow >/dev/null 2>&1 || true;
+        mosquitto_ctrl -h mosquitto -u icebot-dynsec-admin -P "$${MQTT_DYNSEC_ADMIN_PASSWORD}" dynsec createRole icebot-backend-publisher >/dev/null 2>&1 || true;
+        mosquitto_ctrl -h mosquitto -u icebot-dynsec-admin -P "$${MQTT_DYNSEC_ADMIN_PASSWORD}" dynsec addRoleACL icebot-backend-publisher publishClientSend 'icebot/execution-endpoints/+/commands/available' allow >/dev/null 2>&1 || true;
+        mosquitto_ctrl -h mosquitto -u icebot-dynsec-admin -P "$${MQTT_DYNSEC_ADMIN_PASSWORD}" dynsec createClient icebot-backend "$${MQTT_BACKEND_PASSWORD}" >/dev/null 2>&1 || true;
+        mosquitto_ctrl -h mosquitto -u icebot-dynsec-admin -P "$${MQTT_DYNSEC_ADMIN_PASSWORD}" dynsec setClientPassword icebot-backend "$${MQTT_BACKEND_PASSWORD}" >/dev/null 2>&1;
+        mosquitto_ctrl -h mosquitto -u icebot-dynsec-admin -P "$${MQTT_DYNSEC_ADMIN_PASSWORD}" dynsec addClientRole icebot-backend icebot-backend-publisher -1 >/dev/null 2>&1 || true
+    restart: "no"
 
 volumes:
   mqtt-config:
