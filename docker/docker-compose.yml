@@ -1,3 +1,7 @@
+networks:
+  icebot_network:
+    external: true
+
 services:
   qdrant:
     image: qdrant/qdrant:v1.18.1
@@ -13,6 +17,8 @@ services:
     container_name: IceBot-tools-aspire-dashboard
     profiles:
       - observability
+    networks:
+      - icebot_network
     ports:
       - "127.0.0.1:18888:18888"
       - "127.0.0.1:18889:18889"
