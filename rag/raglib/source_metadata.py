@@ -19,7 +19,7 @@ DOC_TYPE_BY_NAME = {
     "LOCAL_EDGE_RUNTIME_ERD.md": "local-edge-erd",
     "MULTI_TENANCY_RULES.md": "multi-tenancy",
     "NAMING_RULES.md": "naming",
-    "RAG_CONTEXT_MAP.md": "routing",
+    "DOCUMENTATION_ROUTING_MAP.md": "routing",
     "SYSTEM_FLOWS.md": "flow",
     "WORKING_PROTOCOL.md": "working-protocol",
 }

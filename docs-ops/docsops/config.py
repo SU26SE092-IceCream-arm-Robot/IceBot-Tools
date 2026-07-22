@@ -25,7 +25,7 @@ IMPORTANT_DOC_PATHS = [
     "IceBot-Backend/AGENTS.md",
     "IceBot-Backend/ARCHITECTURE.md",
     "IceBot-Backend/docs/README.md",
-    "IceBot-Backend/docs/RAG_CONTEXT_MAP.md",
+    "IceBot-Backend/docs/DOCUMENTATION_ROUTING_MAP.md",
     "IceBot-Tools/AGENTS.md",
     "IceBot-Tools/README.md",
     "IceBot-Tools/docs/ENTRYPOINTS.md",

@@ -120,18 +120,65 @@ def find_stale_references(
     }
 
 
+def check_backend_doc_structure(*, max_failures: int = 30) -> dict:
+    docs_root = (WORKSPACE_ROOT / "IceBot-Backend" / "docs").resolve()
+    files = iter_markdown_files([docs_root])
+    failures = []
+    total_issues = 0
+    forbidden_name_prefixes = ("HISTORICAL_", "DEPRECATED_", "PROPOSAL_")
+
+    def add_failure(file_path: Path, reason: str) -> None:
+        nonlocal total_issues
+        total_issues += 1
+        if len(failures) < max_failures:
+            failures.append({
+                "file": display_path(file_path, root=WORKSPACE_ROOT),
+                "line": None,
+                "target": None,
+                "reason": reason,
+            })
+
+    for file_path in files:
+        text = file_path.read_text(encoding="utf-8-sig", errors="ignore")
+        lines = text.splitlines()
+
+        if len(lines) > 500:
+            add_failure(file_path, f"active backend doc has {len(lines)} lines; split ownership before exceeding 500")
+
+        if file_path.name.startswith(forbidden_name_prefixes):
+            add_failure(file_path, "historical/deprecated/proposal material belongs in Vault, not active backend docs")
+
+        if file_path.name == "README.md":
+            continue
+
+        if "## Search Keywords" not in lines:
+            add_failure(file_path, "missing '## Search Keywords' section")
+        if "## Related Docs" not in lines:
+            add_failure(file_path, "missing '## Related Docs' section")
+
+    return {
+        "check": "backend_doc_structure",
+        "passed": total_issues == 0,
+        "files_scanned": len(files),
+        "failure_count": total_issues,
+        "truncated": total_issues > len(failures),
+        "failures": failures,
+    }
+
+
 def run_all_docs_checks(*, max_failures_per_check: int = 30) -> dict:
     checks = [
         check_markdown_links(max_failures=max_failures_per_check),
         check_important_doc_index(max_failures=max_failures_per_check),
         find_stale_references(max_failures=max_failures_per_check),
+        check_backend_doc_structure(max_failures=max_failures_per_check),
     ]
     passed = all(check["passed"] for check in checks)
 
     if passed:
         return {
             "passed": True,
-            "summary": "Docs checks passed: links, doc index, stale refs.",
+            "summary": "Docs checks passed: links, doc index, stale refs, backend doc structure.",
         }
 
     return {

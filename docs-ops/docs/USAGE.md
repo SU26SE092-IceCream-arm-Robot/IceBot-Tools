@@ -37,6 +37,8 @@ The MCP tool is quiet on success and structured on failure.
 | `check_doc_index.py` | Verifies important index/router docs exist and their links resolve. |
 | `find_stale_refs.py` | Finds references to known old paths such as deleted README files or moved docs. |
 
+The aggregate check also validates `IceBot-Backend/docs` structure: active documents must stay at or below 500 lines, non-README documents need `Search Keywords` and `Related Docs`, and historical/deprecated/proposal files must live in Vault rather than the active backend source-of-truth tree.
+
 ## Scope
 
 Default scan root is the workspace root:
@@ -91,7 +93,7 @@ python .\docs-ops\commands\check_docs.py
 ## Boundary
 
 - This is docs hygiene tooling, not documentation source of truth.
-- Do not add semantic quality checks here yet.
+- Keep checks structural and deterministic; semantic contract review remains a human/code-review responsibility.
 - Do not auto-fix docs in V1.
 - Keep stale-reference rules explicit in `docs-ops/docsops/config.py`.
 - MCP output should stay quiet on success and verbose only on failure.
