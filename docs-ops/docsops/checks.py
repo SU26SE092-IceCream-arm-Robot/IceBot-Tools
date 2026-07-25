@@ -3,6 +3,7 @@ from pathlib import Path
 from docsops.config import DEFAULT_DOC_ROOTS, IMPORTANT_DOC_PATHS, STALE_REFERENCE_PATTERNS
 from docsops.files import display_path, iter_markdown_files
 from docsops.markdown_links import check_link, extract_markdown_links
+from docsops.api_inventory import check_policy_inventory
 from toolcore.workspace import WORKSPACE_ROOT
 
 
@@ -127,13 +128,13 @@ def check_backend_doc_structure(*, max_failures: int = 30) -> dict:
     total_issues = 0
     forbidden_name_prefixes = ("HISTORICAL_", "DEPRECATED_", "PROPOSAL_")
 
-    def add_failure(file_path: Path, reason: str) -> None:
+    def add_failure(file_path: Path, reason: str, line_number: int | None = None) -> None:
         nonlocal total_issues
         total_issues += 1
         if len(failures) < max_failures:
             failures.append({
                 "file": display_path(file_path, root=WORKSPACE_ROOT),
-                "line": None,
+                "line": line_number,
                 "target": None,
                 "reason": reason,
             })
@@ -144,6 +145,20 @@ def check_backend_doc_structure(*, max_failures: int = 30) -> dict:
 
         if len(lines) > 500:
             add_failure(file_path, f"active backend doc has {len(lines)} lines; split ownership before exceeding 500")
+
+        section_starts = [
+            index for index, line in enumerate(lines)
+            if line.startswith("## ") or line.startswith("### ")
+        ]
+        for section_index, start in enumerate(section_starts):
+            end = section_starts[section_index + 1] if section_index + 1 < len(section_starts) else len(lines)
+            section_length = end - start
+            if section_length > 120:
+                add_failure(
+                    file_path,
+                    f"section '{lines[start]}' has {section_length} lines; split it at 120 lines or less",
+                    start + 1,
+                )
 
         if file_path.name.startswith(forbidden_name_prefixes):
             add_failure(file_path, "historical/deprecated/proposal material belongs in Vault, not active backend docs")
@@ -172,13 +187,14 @@ def run_all_docs_checks(*, max_failures_per_check: int = 30) -> dict:
         check_important_doc_index(max_failures=max_failures_per_check),
         find_stale_references(max_failures=max_failures_per_check),
         check_backend_doc_structure(max_failures=max_failures_per_check),
+        check_policy_inventory(max_failures=max_failures_per_check),
     ]
     passed = all(check["passed"] for check in checks)
 
     if passed:
         return {
             "passed": True,
-            "summary": "Docs checks passed: links, doc index, stale refs, backend doc structure.",
+            "summary": "Docs checks passed: links, doc index, stale refs, backend doc structure, API policy inventory.",
         }
 
     return {

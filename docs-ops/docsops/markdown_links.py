@@ -68,22 +68,56 @@ def normalize_target_path(target: str) -> str:
     return unquote(target.strip())
 
 
+def _heading_anchors(path: Path) -> set[str]:
+    anchors: set[str] = set()
+    occurrences: dict[str, int] = {}
+
+    for line in path.read_text(encoding="utf-8-sig", errors="ignore").splitlines():
+        match = re.match(r"^#{1,6}\s+(.+?)\s*#*\s*$", line)
+        if not match:
+            continue
+
+        heading = re.sub(r"\[([^]]+)]\([^)]+\)", r"\1", match.group(1))
+        heading = re.sub(r"<[^>]+>", "", heading)
+        heading = heading.replace("`", "").replace("*", "").replace("_", "")
+        slug = "".join(character for character in heading.lower()
+                       if character.isalnum() or character.isspace() or character == "-")
+        slug = re.sub(r"\s+", "-", slug.strip())
+
+        duplicate_index = occurrences.get(slug, 0)
+        occurrences[slug] = duplicate_index + 1
+        anchors.add(slug if duplicate_index == 0 else f"{slug}-{duplicate_index}")
+
+    return anchors
+
+
 def check_link(link: MarkdownLink) -> BrokenLink | None:
-    if is_external_or_anchor_only(link.target):
+    target = link.target.strip()
+    anchor_only = target.startswith("#")
+    if is_external_or_anchor_only(target) and not anchor_only:
         return None
 
-    target_path = normalize_target_path(link.target)
-    if not target_path:
-        return None
+    target_path = normalize_target_path(target)
+    resolved = link.source_file.resolve() if anchor_only else (link.source_file.parent / target_path).resolve()
 
-    resolved = (link.source_file.parent / target_path).resolve()
-    if resolved.exists():
-        return None
+    if not resolved.exists():
+        return BrokenLink(
+            source_file=link.source_file,
+            target=link.target,
+            resolved_path=resolved,
+            line_number=link.line_number,
+            reason="target does not exist",
+        )
 
-    return BrokenLink(
-        source_file=link.source_file,
-        target=link.target,
-        resolved_path=resolved,
-        line_number=link.line_number,
-        reason="target does not exist",
-    )
+    fragment = unquote(target.split("#", 1)[1]).strip().lower() if "#" in target else ""
+    if fragment and resolved.is_file() and resolved.suffix.lower() == ".md":
+        if fragment not in _heading_anchors(resolved):
+            return BrokenLink(
+                source_file=link.source_file,
+                target=link.target,
+                resolved_path=resolved,
+                line_number=link.line_number,
+                reason=f"heading anchor '#{fragment}' does not exist",
+            )
+
+    return None

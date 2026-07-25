@@ -14,7 +14,7 @@
     "required": false
   },
   {
-    "path": "../Docs",
+    "path": "../IceBot-Product",
     "source_type": "project-doc",
     "authority": "official",
     "status": "current",

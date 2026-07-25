@@ -12,6 +12,72 @@ Run from `IceBot-Tools`.
 python .\docs-ops\commands\check_docs.py
 ```
 
+Check that REST and GraphQL authorization policies are present in the backend
+permission matrix:
+
+```powershell
+python .\docs-ops\commands\check_api_inventory.py
+```
+
+Export the executable REST inventory from controller attributes for a review
+or documentation update. The output is generated evidence, not a maintained
+source document:
+
+```powershell
+python .\docs-ops\commands\export_rest_route_inventory.py `
+  --output .\artifacts\rest-route-inventory.md
+```
+
+Export a stable JSON catalog for cross-repository implementation contracts.
+The output is generated evidence; regenerate it after controller-route changes:
+
+```powershell
+python .\docs-ops\commands\export_rest_operation_catalog.py `
+  --output ..\IceBot-Product\delivery\catalogs\OPERATION_CATALOG.json
+```
+
+Prepare a focused contract packet for an AI or contributor. It navigates the
+correct documents and evidence targets; it does not claim the target repository
+is complete:
+
+```powershell
+python .\docs-ops\commands\prepare_implementation_packet.py `
+  --target IceBot-Kiosk `
+  --id FLOW-CHECKOUT-EXECUTION
+```
+
+Create an evidence checklist for the current WebApp source. The result is not
+a semantic completion claim; give it to an AI/reviewer with the linked flow
+contracts:
+
+```powershell
+python .\docs-ops\commands\audit_target_capability_evidence.py `
+  --target IceBot-WebApp `
+  --output ..\IceBot-WebApp\.project-memory\capability-evidence.md
+```
+
+Show confirmed contract changes the WebApp has not acknowledged yet:
+
+```powershell
+python .\docs-ops\commands\prepare_contract_change_packet.py `
+  --target IceBot-WebApp
+```
+
+In Product-repository CI, require a change-ledger update when contract-owning
+files change. Supply the PR merge-base or target branch ref:
+
+```powershell
+python .\docs-ops\commands\check_contract_change_coverage.py `
+  --base origin/main
+```
+
+Verify the cross-repository flow, capability, message, and generated REST
+catalog links before handing contracts to another repository:
+
+```powershell
+python .\docs-ops\commands\check_implementation_contracts.py
+```
+
 Run individual checks only when debugging:
 
 ```powershell
@@ -33,11 +99,19 @@ The MCP tool is quiet on success and structured on failure.
 | Command | Purpose |
 | --- | --- |
 | `check_docs.py` | Runs all docs hygiene checks in one command. |
-| `check_links.py` | Scans Markdown files and reports local links pointing to missing files/folders. |
+| `check_links.py` | Scans Markdown files and reports missing local files/folders and invalid Markdown heading anchors. |
 | `check_doc_index.py` | Verifies important index/router docs exist and their links resolve. |
 | `find_stale_refs.py` | Finds references to known old paths such as deleted README files or moved docs. |
+| `check_api_inventory.py` | Verifies policy alignment across REST/GraphQL usage, ASP.NET registration, and `PermissionMatrixRules`. |
+| `export_rest_route_inventory.py` | Exports controller-attribute REST routes as reviewable Markdown. |
+| `export_rest_operation_catalog.py` | Exports stable REST operation IDs and route/policy evidence as JSON. |
+| `prepare_implementation_packet.py` | Produces focused reading/evidence instructions for a target role or repository. |
+| `audit_target_capability_evidence.py` | Produces candidate path evidence for a frontend capability audit. |
+| `prepare_contract_change_packet.py` | Produces confirmed target-specific contract changes after acknowledgement. |
+| `check_contract_change_coverage.py` | Requires Product impact-ledger review when contract-owning files change. |
+| `check_implementation_contracts.py` | Validates flow/capability/message links and generated REST catalog freshness. |
 
-The aggregate check also validates `IceBot-Backend/docs` structure: active documents must stay at or below 500 lines, non-README documents need `Search Keywords` and `Related Docs`, and historical/deprecated/proposal files must live in Vault rather than the active backend source-of-truth tree.
+The aggregate check also validates `IceBot-Backend/docs` structure: active documents must stay at or below 500 lines, individual level-two/level-three sections must stay at or below 120 lines, non-README documents need `Search Keywords` and `Related Docs`, historical/deprecated/proposal files must live in Vault rather than the active backend source-of-truth tree, and authorization policies stay aligned across endpoint usage, ASP.NET registration, and the permission matrix.
 
 ## Scope
 

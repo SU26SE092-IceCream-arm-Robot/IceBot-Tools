@@ -21,7 +21,7 @@ EXCLUDED_DIR_NAMES = {
 
 IMPORTANT_DOC_PATHS = [
     "README.md",
-    "Docs/README.md",
+    "IceBot-Product/README.md",
     "IceBot-Backend/AGENTS.md",
     "IceBot-Backend/ARCHITECTURE.md",
     "IceBot-Backend/docs/README.md",
@@ -38,6 +38,12 @@ IMPORTANT_DOC_PATHS = [
 ]
 
 STALE_REFERENCE_PATTERNS = [
+    "IceBot-Product/BUSINESS_FLOWS.md",
+    "IceBot-Product\\BUSINESS_FLOWS.md",
+    "IceBot-Product/product-operations/",
+    "IceBot-Product\\product-operations\\",
+    "IceBot-Product/implementation-contracts/",
+    "IceBot-Product\\implementation-contracts\\",
     "IceBot-Tools/rag/README.md",
     "IceBot-Tools\\rag\\README.md",
     "IceBot-Tools/mcp/README.md",

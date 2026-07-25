@@ -9,7 +9,7 @@ DOC_TYPE_BY_NAME = {
     "API_SURFACE_RULES.md": "api",
     "AUTHORIZATION_RULES.md": "authorization",
     "BOUNDARY_CONTEXTS.md": "domain",
-    "BUSINESS_FLOWS.md": "flow",
+    "OVERVIEW.md": "product-overview",
     "DATA_MODELING_RULES.md": "data-modeling",
     "DEPENDENCY_RULES.md": "dependency",
     "DOCUMENTATION_RULES.md": "documentation",
